@@ -5,12 +5,17 @@
   (:import [com.mongodb MongoOptions ServerAddress]))
 
 (def conn 
-  (mg/connect 
-   {:host 
-    (or (get (System/getenv) "MONGO_TRIVIA_BOT_HOST") "127.0.0.1") 
-    :port 
-    (Integer. (or (get (System/getenv) "MONGO_TRIVIA_BOT_PORT") "27017"))}))
+  (if (nil? (System/getenv "MONGODB_URI")) 
+    (mg/connect 
+     {:host 
+      (or (get (System/getenv) "MONGO_TRIVIA_BOT_HOST") "127.0.0.1") 
+      :port 
+      (Integer. (or (get (System/getenv) "MONGO_TRIVIA_BOT_PORT") "27017"))})
+    (mg/connect)
+    (:conn (mg/connect-via-uri (System/getenv "MONGODB_URI")))))
 
 (def database (env :database-name))
-(def db-handle (mg/get-db conn database))
+(def db-handle (if (nil? (System/getenv "MONGODB_URI")) 
+                 (mg/get-db conn database)
+                 (:db (mg/connect-via-uri (System/getenv "MONGODB_URI")))))
 (def quizzes-collection-name "quizzes")
