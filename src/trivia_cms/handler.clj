@@ -53,11 +53,13 @@
 
 ; this calls save-question behind the scenes
 (defn save-quiz! [quiz]
-  (let [questions (:questions quiz)]
-    (let [quiz (first (mc/insert-and-return db-handle quizzes-collection-name (dissoc quiz :questions)))]
+  (let [questions (:questions quiz)
+        quiz-name (:quiz-name quiz)]
+    (let [saved-quiz (first (mc/insert-and-return db-handle quizzes-collection-name (dissoc quiz :questions)))]
       (doseq [q questions]
-        (save-question! (:quiz-name quiz) q)))
-    quiz))
+        (save-question! quiz-name q))
+      (println saved-quiz)
+      quiz)))
 
 (defn get-quiz [name]
   (let [qs (mc/find-maps db-handle quizzes-collection-name {:quiz-name name})]
@@ -92,7 +94,8 @@
           (if (some nil? [params quiz-name])
             {:status 400 
              :body {:error-message  "Name is required when creating quizzes."} }
-            (response (save-quiz! {:quiz-name quiz-name :questions questions})))))
+            (response 
+             (save-quiz! {:quiz-name quiz-name :questions questions})))))
 
   (DELETE "/quizzes/:name" [name]
           (let [num-deleted (delete-quiz name)]

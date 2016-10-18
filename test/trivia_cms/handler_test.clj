@@ -30,6 +30,13 @@
                 :value 3}]
    :quiz-name "test_quiz_3_to_delete"})
 
+(def test-quiz-4-to-create
+  {:questions [{:question "test question 4"
+                :category "test category 4"
+                :answer "test answer 4"
+                :value 4}]
+   :quiz-name "test_quiz_4_to_create"})
+
 (def test-question-1
   {:question-body "test question 1 update"
    :category "test question 1 category update"
@@ -81,7 +88,7 @@
   (testing "create quiz api - valid parameters"
     (let [response (app 
                     (->
-                      (mock/request :post "/quizzes/create" (json/write-str test-quiz-2))
+                      (mock/request :post "/quizzes/create" (json/write-str test-quiz-4-to-create))
                       (mock/content-type "application/json")))]
       (is (= (:status response) 200))))
 
