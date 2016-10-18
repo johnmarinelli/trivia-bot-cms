@@ -58,7 +58,6 @@
     (let [saved-quiz (first (mc/insert-and-return db-handle quizzes-collection-name (dissoc quiz :questions)))]
       (doseq [q questions]
         (save-question! quiz-name q))
-      (println saved-quiz)
       quiz)))
 
 (defn get-quiz [name]
@@ -70,6 +69,9 @@
        (fn [qid]
          (.toString qid)))
       nil)))
+
+(defn get-quizzes []
+  (mc/find-maps db-handle quizzes-collection-name {}))
 
 (defn delete-question [quiz-name question-id]
   (mc/find-and-modify db-handle
@@ -83,9 +85,13 @@
     (.getN res)))
 
 (defroutes app-routes
-  (GET "/" [request] (load-page (index {})))
 
-  (GET "/quizzes" [request] (load-page (quiz {})))
+  (GET "/quizzes" [request] 
+       (response 
+        (map
+         (fn [q] 
+           (update-in q [:_id] #(.toString %)))
+         (get-quizzes))))
 
   (POST "/quizzes/create" req
         (let [params (:params req)

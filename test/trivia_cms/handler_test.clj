@@ -60,13 +60,6 @@
 (use-fixtures :once trivia-fixture)
 
 (deftest test-app
-  (testing "homepage"
-    (let [response (app (mock/request :get "/"))]
-      (is (= (:status response) 200))))
-
-  (testing "show quizzes"
-    (let [response (app (mock/request :get "/quizzes"))]
-      (is (= (:status response) 200))))
 
   (testing "create quiz api - invalid parameters"
     (let [response (app 
@@ -103,6 +96,12 @@
       (is (= (:status response) 200))
       (is (= (dissoc (json/read-str (:body response) :key-fn keyword) :_id) 
              test-quiz-2))))
+
+  (testing "get quizzes api"
+    (let [response (app
+                    (mock/request :get "/quizzes"))]
+      (is (= (:status response) 200))
+      (is (= 4 (count (json/read-str (:body response)))))))
 
   (testing "delete quiz api - delete a quiz"
     (do

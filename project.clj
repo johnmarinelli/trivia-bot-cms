@@ -3,6 +3,7 @@
   :url "http://example.com/FIXME"
   :min-lein-version "2.0.0"
   :dependencies [[org.clojure/clojure "1.8.0"]
+                 [org.clojure/clojurescript "1.9.229"]
                  [compojure "1.5.1"] ; routes
                  [stencil "0.5.0"] ; html templating
                  [ring/ring-defaults "0.2.1"] ; server
@@ -13,11 +14,19 @@
                                                     javax.jms/jms
                                                     com.sun.jdmk/jmxtools
                                                     com.sun.jmx/jmxri]] ; logging
-                 [environ "1.1.0" ; environment manager
-                  ]
+                 [environ "1.1.0"]  ; environment manager
+                 [reagent "0.6.0"] ; react interface
                  ]
   :plugins [[lein-ring "0.9.7"]
-            [lein-environ "1.1.0"]]
+            [lein-environ "1.1.0"]
+            [lein-cljsbuild "1.1.4"]]
+
+  :cljsbuild {:builds [{:source-paths ["src-cljs"]
+                        :compiler {:output-to "target/app.js"
+                                   :optimizations :whitespace
+                                   :preamble []
+                                   :pretty-print true}}]}
+
   :ring {:handler trivia-cms.handler/app}
   :profiles
   {:dev {:dependencies [[javax.servlet/servlet-api "2.5"]
