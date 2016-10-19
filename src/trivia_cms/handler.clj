@@ -4,6 +4,7 @@
 
             [compojure.core :refer :all]
             [compojure.route :as route]
+
             [ring.middleware.json :refer [wrap-json-params wrap-json-response]]
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
             [ring.util.codec :as codec]
@@ -13,36 +14,14 @@
 
             [trivia-cms.db :refer :all])
 
-  (:use [stencil.core] ; html template rendering
-        [ring.util.response :only [response not-found]] ; wrap json response
-        [monger.operators] ; mongodb operators
+  (:use [ring.util.response :only [response not-found]] ; wrap json response
+        [monger.operators] ; mongodb operators $push, $pull, etc
+        [hiccup.core] ; html
         ))
 
-(defn read-template [filepath]
-  (slurp (clojure.java.io/resource filepath)))
-
-; filepath is relative to `resources` directory
-(defn render-html [filepath view-args]
-  (let [html (read-template filepath)]
-    (render-string html view-args)))
-
-(defn index 
-  [view-args] 
-  {:page-type :index 
-   :filepath "views/index.html" 
-   :view-args view-args})
-
-(defn quiz 
-  [view-args] 
-  {:page-type :quiz  
-   :filepath "views/quizzes.html" 
-   :view-args view-args})
-
-(defn load-page 
-  [view]
-  (render-html 
-   (:filepath view) 
-   (:view-args view)))
+(def pages
+  {:new-quiz (fn []
+               [])})
 
 (defn save-question! [quiz-name question]
   (mc/find-and-modify db-handle
@@ -92,6 +71,9 @@
          (fn [q] 
            (update-in q [:_id] #(.toString %)))
          (get-quizzes))))
+
+  (GET "/quizzes/create" req
+       (:new-quiz pages))
 
   (POST "/quizzes/create" req
         (let [params (:params req)

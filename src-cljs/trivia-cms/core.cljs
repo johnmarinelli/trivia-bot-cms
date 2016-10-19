@@ -57,9 +57,30 @@
       [contact c])]
    [new-contact]])
 
-(defn my-component []
-  [:div
-   [:h2 "SUP"]])
+(defn- validate-new-question [question-form]
+  (println "validate-new-question")
+  (println question-form))
+
+(defn- save-new-question [question-form]
+  (println save-new-question))
+
+(defn add-question-component []
+  (let [question-body (r/atom "")
+        question-category (r/atom "")] 
+    (fn []
+      [:form {:role "form" :method "post"}
+       [:input {:type "text"
+                :placeholder "Question"
+                :value @question-body
+                :on-change #(reset! question-body (-> % .-target .-value))}]
+       [:input {:type "text"
+                :placeholder "Category"
+                :value @question-category
+                :on-change #(reset! question-category (-> % .-target .-value))}]
+       [:button {:on-click (fn [q] 
+                             (when (validate-new-question q)
+                               (save-new-question q)))}
+        "Add New Question"]])))
 
 ;; Render root 
 (defn start []
@@ -67,5 +88,5 @@
    [contact-list]
    (.getElementById js/document "root"))
   (r/render-component
-   [my-component]
+   [add-question-component]
    (.getElementById js/document "john")))

@@ -5,7 +5,7 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.9.229"]
                  [compojure "1.5.1"] ; routes
-                 [stencil "0.5.0"] ; html templating
+                 [hiccup "1.0.5"] ; html 
                  [ring/ring-defaults "0.2.1"] ; server
                  [ring/ring-json "0.4.0"] ; json parser
                  [com.novemberain/monger "3.1.0"] ; mongodb client
