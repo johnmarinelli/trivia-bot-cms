@@ -12,7 +12,9 @@
             [monger.core :as mg]
             [monger.collection :as mc]
 
-            [trivia-cms.db :refer :all])
+            [trivia-cms.db :refer :all]
+            [trivia-cms.views.layout :as layout]
+            [trivia-cms.views.content :as content])
 
   (:use [ring.util.response :only [response not-found]] ; wrap json response
         [monger.operators] ; mongodb operators $push, $pull, etc
@@ -21,7 +23,7 @@
 
 (def pages
   {:new-quiz (fn []
-               [])})
+               )})
 
 (defn save-question! [quiz-name question]
   (mc/find-and-modify db-handle
@@ -73,7 +75,7 @@
          (get-quizzes))))
 
   (GET "/quizzes/create" req
-       (:new-quiz pages))
+       (layout/application "LTCLA Trivia" (content/create-quiz)))
 
   (POST "/quizzes/create" req
         (let [params (:params req)
