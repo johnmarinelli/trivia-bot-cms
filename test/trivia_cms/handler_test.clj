@@ -3,9 +3,8 @@
             [clojure.data.json :as json]
             [clojure.string :as string]
             [ring.mock.request :as mock]
-            [ring.util.codec :as codec]
             [trivia-cms.handler :refer :all]
-            [trivia-cms.db :refer :all]
+            [trivia-cms.db.config :refer :all]
             [monger.core :as mg]
             [monger.collection :as mc]))
 
@@ -59,12 +58,12 @@
 
 (use-fixtures :once trivia-fixture)
 
-(deftest test-app
+(deftest test-api
 
   (testing "create quiz api - invalid parameters"
     (let [response (app 
                     (-> 
-                     (mock/request :post "/quizzes/create" 
+                     (mock/request :post "/api/quizzes/create" 
                                    (json/write-str {}))
                      (mock/content-type "application/json")))]
       (is (= (:status response) 400))))
@@ -73,7 +72,7 @@
     (let [response (app 
                     (->
                      (mock/request :post 
-                                   "/quizzes/create" 
+                                   "/api/quizzes/create" 
                                    (json/write-str {:quiz-name "first quiz"}))
                      (mock/content-type "application/json")))]
       (is (= (:status response) 200))))
@@ -81,25 +80,25 @@
   (testing "create quiz api - valid parameters"
     (let [response (app 
                     (->
-                      (mock/request :post "/quizzes/create" (json/write-str test-quiz-4-to-create))
+                      (mock/request :post "/api/quizzes/create" (json/write-str test-quiz-4-to-create))
                       (mock/content-type "application/json")))]
       (is (= (:status response) 200))))
 
   (testing "get quiz api - invalid quiz"
-    (let [response (app (mock/request :get "/quizzes/invalid"))]
+    (let [response (app (mock/request :get "/api/quizzes/invalid"))]
       (is (= (:status response) 404))
       (is (= (:body response) (json/write-str {:error-message "Quiz 'invalid' not found."})))))
 
   (testing "get quiz api - valid quiz"
     (let [response (app 
-                    (mock/request :get (str "/quizzes/" (:quiz-name test-quiz-2))))]
+                    (mock/request :get (str "/api/quizzes/" (:quiz-name test-quiz-2))))]
       (is (= (:status response) 200))
       (is (= (dissoc (json/read-str (:body response) :key-fn keyword) :_id) 
              test-quiz-2))))
 
   (testing "get quizzes api"
     (let [response (app
-                    (mock/request :get "/quizzes"))]
+                    (mock/request :get "/api/quizzes"))]
       (is (= (:status response) 200))
       (is (= 4 (count (json/read-str (:body response)))))))
 
@@ -109,18 +108,18 @@
       (let [response (app 
                       (mock/request 
                        :delete 
-                       (str "/quizzes/" (:quiz-name test-quiz-3-to-delete))))]
+                       (str "/api/quizzes/" (:quiz-name test-quiz-3-to-delete))))]
         (is (= (:status response) 200))
         (is (= (json/read-str (:body response) :key-fn keyword) {:num-deleted 1})))))
 
   (testing "delete quiz api - delete an invalid quiz"
-    (let [response (app (mock/request :delete "/quizzes/invalid"))]
+    (let [response (app (mock/request :delete "/api/quizzes/invalid"))]
       (is (= (:status response) 404))
       (is (= (json/read-str (:body response) :key-fn keyword) 
              {:error-message "Quiz 'invalid' not found."}))))
 
   (testing "create question api - create a new question"
-    (let [path (str "/quizzes/" (:quiz-name test-quiz-1) "/questions/create")
+    (let [path (str "/api/quizzes/" (:quiz-name test-quiz-1) "/questions/create")
           response (app 
                     (->
                      (mock/request 

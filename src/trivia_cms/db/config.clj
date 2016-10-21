@@ -1,4 +1,4 @@
-(ns trivia-cms.db
+(ns trivia-cms.db.config
   (:require [monger.core :as mg]
             [monger.collection :as mc]
             [environ.core :refer [env]])

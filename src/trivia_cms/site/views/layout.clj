@@ -1,4 +1,4 @@
-(ns trivia-cms.views.layout
+(ns trivia-cms.site.views.layout
   (:use [hiccup.page :only (html5 include-css include-js)]))
 
 (defn application [title & content]
