@@ -5,35 +5,39 @@
   (:use [monger.operators] ; mongodb operators $push, $pull, etc
         ))
 
-(defn save-question! [quiz-name question]
-  (mc/find-and-modify db-handle
-                      quizzes-collection-name
-                      {:quiz-name quiz-name} 
-                      {$push {:questions 
-                              (assoc question :id (System/currentTimeMillis))}}
-                      {:return-new true}))
+(defn parse-id-from-document [d]
+  (update-in
+   d
+   [:_id]
+   #(.toString %)))
+
+(defn save-question [quiz-name question]
+  (let [res (mc/find-and-modify db-handle
+                                quizzes-collection-name
+                                {:quiz-name quiz-name} 
+                                {$push {:questions 
+                                        (assoc question :id (System/currentTimeMillis))}}
+                                {:return-new true})] 
+    (parse-id-from-document res)))
 
 ; this calls save-question behind the scenes
-(defn save-quiz! [quiz]
+(defn save-quiz [quiz]
   (let [questions (:questions quiz)
         quiz-name (:quiz-name quiz)]
     (let [saved-quiz (first (mc/insert-and-return db-handle quizzes-collection-name (dissoc quiz :questions)))]
       (doseq [q questions]
-        (save-question! quiz-name q))
+        (save-question quiz-name q))
       quiz)))
 
 (defn get-quiz [name]
   (let [qs (mc/find-maps db-handle quizzes-collection-name {:quiz-name name})]
     (if (> (count qs) 0) 
-      (update-in 
-       (first qs)
-       [:_id]
-       (fn [qid]
-         (.toString qid)))
+      (parse-id-from-document (first qs))
       nil)))
 
 (defn get-quizzes []
-  (mc/find-maps db-handle quizzes-collection-name {}))
+  (let [quizzes (mc/find-maps db-handle quizzes-collection-name {})]
+    (map parse-id-from-document quizzes)))
 
 (defn delete-question [quiz-name question-id]
   (mc/find-and-modify db-handle

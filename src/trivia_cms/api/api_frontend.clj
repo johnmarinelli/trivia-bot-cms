@@ -18,11 +18,7 @@
 (defroutes api-routes
 
   (GET "/api/quizzes" [request] 
-       (response 
-        (map
-         (fn [q] 
-           (update-in q [:_id] #(.toString %)))
-         (get-quizzes))))
+       (get-quizzes))
 
   (POST "/api/quizzes/create" req
         (let [params (:params req)
@@ -32,7 +28,7 @@
             {:status 400 
              :body {:error-message  "Name is required when creating quizzes."} }
             (response 
-             (save-quiz! {:quiz-name quiz-name :questions questions})))))
+             (save-quiz {:quiz-name quiz-name :questions questions})))))
 
   (DELETE "/api/quizzes/:name" [name]
           (let [num-deleted (delete-quiz name)]
@@ -70,13 +66,10 @@
             {:status 400
              :body {:error-message "All fields are required when creating questions."}}
             (response 
-             (update-in
-              (save-question! quiz-name {:question-body question-body
-                                         :category category
-                                         :answer answer
-                                         :value value})
-              [:_id]
-              #(.toString %)))))))
+             (save-question quiz-name {:question-body question-body
+                                       :category category
+                                       :answer answer
+                                       :value value}))))))
 
 (def api
   (handler/api (->

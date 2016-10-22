@@ -62,7 +62,7 @@
   (f)
   (teardown-db))
 
-(use-fixtures :once trivia-fixture)
+(use-fixtures :each trivia-fixture)
 
 (deftest test-api
 
