@@ -18,6 +18,8 @@
        (layout/application site-title (content/all-quizzes)))
   (GET "/quizzes/create" req
        (layout/application site-title (content/create-quiz)))
+  (GET "/quizzes/:quiz-name" [quiz-name]
+       (layout/application site-title (content/quiz quiz-name)))
   (route/not-found "404"))
 
 (def site
