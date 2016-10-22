@@ -6,41 +6,47 @@
             [trivia-cms.handler :refer :all]
             [trivia-cms.db.config :refer :all]
             [monger.core :as mg]
-            [monger.collection :as mc]))
+            [monger.collection :as mc])
+  (:use [clojure.walk]))
 
 (def test-quiz-1 
-  {:questions [{:question "test question 1"
+  {:questions [{:question-body "test question 1"
               :category "test category 1"
               :answer "test answer 1"
+              :id 1
               :value 1}]
    :quiz-name "test_quiz_1"})
 
 (def test-quiz-2 
-  {:questions [{:question "test question 2"
+  {:questions [{:question-body "test question 2"
               :category "test category 2"
               :answer "test answer 2"
+              :id 2
               :value 2}]
    :quiz-name "test_quiz_2"})
 
 (def test-quiz-3-to-delete
-  {:questions [{:question "test question 3"
+  {:questions [{:question-body "test question 3"
                 :category "test category 3"
                 :answer "test answer 3"
+                :id 3
                 :value 3}]
    :quiz-name "test_quiz_3_to_delete"})
 
 (def test-quiz-4-to-create
-  {:questions [{:question "test question 4"
+  {:questions [{:question-body "test question 4"
                 :category "test category 4"
                 :answer "test answer 4"
+                :id 4
                 :value 4}]
    :quiz-name "test_quiz_4_to_create"})
 
-(def test-question-1
-  {:question-body "test question 1 update"
-   :category "test question 1 category update"
-   :answer "test question 1 answer update"
-   :value 2})
+(def test-question-1-create
+  {:question-body "test question 1 create"
+   :category "test question 1 category create"
+   :answer "test question 1 answer create"
+   :value 2
+   :id 11})
 
 (defn init-db []
   (println "Seeding test database...")
@@ -118,6 +124,7 @@
       (is (= (json/read-str (:body response) :key-fn keyword) 
              {:error-message "Quiz 'invalid' not found."}))))
 
+
   (testing "create question api - create a new question"
     (let [path (str "/api/quizzes/" (:quiz-name test-quiz-1) "/questions/create")
           response (app 
@@ -126,17 +133,20 @@
                       :post 
                       path
                       (json/write-str 
-                       (assoc test-question-1 
-                         :quiz-name (:quiz-name test-quiz-1))))
+                       test-question-1-create))
                      (mock/content-type "application/json")))]
       (is (= (:status response) 200))
-      (is (= (dissoc (json/read-str (:body response) :key-fn keyword) :_id) 
-             (update-in
-              test-quiz-1
-              [:questions]
-              #(concat % [test-question-1]))))))
+      (let [questions (:questions (keywordize-keys (json/read-str (:body response))))]
+        (is (= (count questions) 2))
+        (is (= (map #(dissoc % :id) questions)
+               (map #(dissoc % :id) 
+                    (conj (:questions test-quiz-1) test-question-1-create)))))))
+
+  (testing "delete question api - delete a question"
+    (let [response (app (mock/request :delete "/api/quizzes/test_quiz_1/questions/1"))]
+      (is (= (:status response) 200))
+      (is (= (:body response) 1))))
 
   (testing "not-found route"
     (let [response (app (mock/request :get "/invalid"))]
-
       (is (= (:status response) 404)))))

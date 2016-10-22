@@ -23,5 +23,4 @@
   (route/not-found "404"))
 
 (def site
-  (handler/site (-> site-routes
-                    (wrap-defaults site-defaults))))
+  (handler/site (-> site-routes)))

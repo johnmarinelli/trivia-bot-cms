@@ -19,5 +19,5 @@
       (is (= (:status response) 200))))
 
   (testing "get a single quiz"
-    (let [response (app (mock/request :get "/quizzes/test_quiz_1"))]
+    (let [response (app (mock/request :get "/quizzes/1"))]
       (is (= (:status response) 200)))))

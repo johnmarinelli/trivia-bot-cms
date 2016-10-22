@@ -47,28 +47,34 @@
            (not-found {:error-message (str "Quiz '" name "' not found.")})
            (response quiz))))
 
-  (DELETE "/api/quizzes/:quiz-name/questions/:id" [quiz-name id]
-          (let [num-deleted (delete-question quiz-name id)]
-            (if (> num-deleted 0)
-              (response num-deleted)
-              (not-found
-               (json/write-str {:error-message "Question id '" id "' not found."})))))
+  (DELETE "/api/quizzes/:quiz-name/questions/:id" 
+          {:keys [headers params body] :as request} 
+          (let [{:keys [quiz-name id]} params]
+            (let [num-questions (count (:questions (get-quiz quiz-name)))
+                  num-deleted (- num-questions (count 
+                                                (:questions 
+                                                 (delete-question quiz-name id))))]
+              (if (> num-deleted 0)
+                (response num-deleted)
+                (not-found
+                 (json/write-str {:error-message "Question id '" id "' not found."}))))))
 
+  ; Saves a question to the given quiz
+  ; Returns the modified quiz
   (POST "/api/quizzes/:quiz-name/questions/create" [quiz-name & params]
-        (let [question-body (:question-body params)
-              category (:category params)
-              answer (:answer params)
-              value (:value params)
-              question {:question-body question-body
-                        :category category
-                        :answer answer
-                        :value value}]
-          (if (some nil? [name question-body category answer value])
+        (let [{:keys [question-body
+                      category
+                      answer
+                      value]} params]
+          (if (some nil? [quiz-name question-body category answer value])
             {:status 400
              :body {:error-message "All fields are required when creating questions."}}
             (response 
              (update-in
-              (save-question! quiz-name question)
+              (save-question! quiz-name {:question-body question-body
+                                         :category category
+                                         :answer answer
+                                         :value value})
               [:_id]
               #(.toString %)))))))
 
@@ -78,4 +84,5 @@
                  (wrap-defaults api-defaults)
                  (wrap-json-params)
                  (wrap-json-response))))
+
 

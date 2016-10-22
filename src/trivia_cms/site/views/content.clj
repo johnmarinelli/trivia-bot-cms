@@ -18,22 +18,25 @@
            (for [quiz quizzes]
              [:li 
               [:div.list-item 
-               [:h1 (h (:quiz-name quiz))]]])])))
+               (link-to (str "/quizzes/"(h (:quiz-name quiz))) (h (:quiz-name quiz)))]])])))
 
 (defn quiz [quiz-name]
   (let [quiz (api/get-quiz quiz-name)
         questions (:questions quiz)]
-    (html [:div.content
-           [:h1 quiz-name]
-           [:ul
-            (for [question questions]
-
-              (let [{:keys [question-body 
-                            answer 
-                            category 
-                            value]} question] 
-                [:div.list-item
-                 [:h2 (h question-body)]
-                 [:p (h category)]
-                 [:p (h value)]
-                 [:h3 (h answer)]]))]])))
+    (html 
+     [:div.content
+      [:h1 quiz-name]
+      [:ul
+       (for [question questions]
+         (let [{:keys [question-body 
+                       answer 
+                       category 
+                       value]} question]
+           [:li
+            (form-to [:delete 
+                      (str "/api/quizzes/" quiz-name "/questions/" (h (:id question)))]
+                     [:h2 (h question-body)]
+                     [:p (h category)]
+                     [:p (h value)]
+                     [:h3 (h answer)]
+                     (submit-button "Delete Question"))]))]])))

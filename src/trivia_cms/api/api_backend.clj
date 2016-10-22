@@ -9,7 +9,8 @@
   (mc/find-and-modify db-handle
                       quizzes-collection-name
                       {:quiz-name quiz-name} 
-                      {$push {:questions question}}
+                      {$push {:questions 
+                              (assoc question :id (System/currentTimeMillis))}}
                       {:return-new true}))
 
 ; this calls save-question behind the scenes
@@ -37,8 +38,8 @@
 (defn delete-question [quiz-name question-id]
   (mc/find-and-modify db-handle
                       quizzes-collection-name
-                      (:quiz-name quiz-name)
-                      ($pull {:_id question-id})
+                      {:quiz-name quiz-name}
+                      {$pull {"questions"  {:id (read-string question-id)}}}
                       {:return-new true}))
 
 (defn delete-quiz [name]
