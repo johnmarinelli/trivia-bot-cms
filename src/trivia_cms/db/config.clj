@@ -19,3 +19,5 @@
                  (mg/get-db conn database)
                  (:db (mg/connect-via-uri (System/getenv "MONGODB_URI")))))
 (def quizzes-collection-name "quizzes")
+
+

@@ -10,15 +10,24 @@
             [ring.middleware.json :refer [wrap-json-params wrap-json-response]]
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
             
-            [trivia-cms.api.api-backend :refer :all])
+            [trivia-cms.api.api-backend :refer :all]
+            [trivia-cms.models.quiz :as quiz])
 
   (:use [ring.util.response :only [response not-found]] ; wrap json response
 ))
 
+(defn wrap-object-id-string [handler]
+  (fn [request]
+    (let [response (handler request)]
+;todo
+      )))
+
 (defroutes api-routes
 
-  (GET "/api/quizzes" [request] 
-       (get-quizzes))
+  (GET "/api/quizzes" 
+       [request] 
+       (let [res (quiz/find-models {})]
+         (map #(quiz/serialize %) res)))
 
   (POST "/api/quizzes/create" req
         (let [params (:params req)
@@ -28,10 +37,11 @@
             {:status 400 
              :body {:error-message  "Name is required when creating quizzes."} }
             (response 
-             (save-quiz {:quiz-name quiz-name :questions questions})))))
+             (-> (quiz/create params)
+                 (quiz/serialize))))))
 
-  (DELETE "/api/quizzes/:name" [name]
-          (let [num-deleted (delete-quiz name)]
+  (DELETE "/api/quizzes/:id" [id]
+          (let [num-deleted (quiz/destroy id)]
             (if (> num-deleted 0)
               (response {:num-deleted num-deleted})
               (not-found 
@@ -72,10 +82,10 @@
                                        :value value}))))))
 
 (def api
-  (handler/api (->
-                 api-routes
-                 (wrap-defaults api-defaults)
-                 (wrap-json-params)
-                 (wrap-json-response))))
+  (->
+   api-routes
+   (wrap-defaults api-defaults)
+   (wrap-json-params)
+   (wrap-json-response)))
 
 
