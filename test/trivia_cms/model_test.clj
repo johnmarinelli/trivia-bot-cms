@@ -38,6 +38,20 @@
 
 (deftest test-models
   (deftest test-quizzes
+
+    (testing "quiz models - find by id"
+      (let [id (.toString (:_id test-question-1))
+            res (quiz/find-models (:_id id))]
+        (is (= (count res) 1))
+        (is (= (first res) test-quiz-1))))
+
+
+    (testing "quiz models - find by name"
+      (let [name (:quiz-name test-question-1)
+            res (quiz/find-models (:quiz-name name))]
+        (is (= (count res) 1))
+        (is (= (first res) test-quiz-1))))
+
     (testing "quiz models - add questions"
       (let [question (->Question (ObjectId.)
                                  "a"
@@ -46,13 +60,15 @@
                                  "d")
             res (quiz/add-questions test-quiz-1 [question])]
         (is (= (count (:questions res)) 2))
-        (is (= (:questions res) (conj (:questions test-quiz-1) (:_id question))))))
+        (is (= (:questions res) 
+               (conj (:questions test-quiz-1) (.toString (:_id question)))))))
 
     (testing "quiz models - remove questions"
       (let [num-questions (count 
                            (:questions
                             (first
-                             (quiz/find-models {:_id (:_id test-quiz-1)}))))
+                             (quiz/find-models 
+                              {:_id (.toString (:_id test-quiz-1))}))))
             res (quiz/remove-questions test-quiz-1 [test-question-1])]
         (is (= (count (:questions res)) (dec num-questions)))))
 
@@ -65,7 +81,7 @@
        (is (= (:quiz-name created) "test-quiz"))))
     
     (testing "quiz models - destroy"
-      (let [id (:_id test-quiz-1)
+      (let [id (.toString (:_id test-quiz-1))
             res (quiz/destroy id)]
         (is (= res 1)))))
 
@@ -78,7 +94,13 @@
             created (question/create params)]
         (is (= (dissoc created :_id) params))))
 
+    (testing "question models - find by id"
+      (let [id (.toString (:_id  test-question-1))
+            res (question/find-models {:_id id})]
+        (is (= (count res) 1))
+        (is (= (first res) test-question-1))))
+
     (testing "question models - destroy"
-      (let [id (:_id test-question-1)
+      (let [id (.toString (:_id test-question-1))
             res (question/destroy id)]
         (is (= res 1))))))

@@ -2,6 +2,7 @@
   (:require [monger.core :as mg]
             [monger.collection :as mc]
             [trivia-cms.db.config :refer :all]
+            [trivia-cms.models.model :as model]
             [trivia-cms.errors.api-error :refer [api-error]])
   (:use monger.operators)
   (:import org.bson.types.ObjectId))
@@ -11,9 +12,11 @@
 (defrecord Question [_id body answer category value])
 
 (defn find-models [cond]
-  (map #(let [{:keys [_id body answer category value]} %]
-          (->Question _id body answer category value)) 
-       (mc/find-maps db-handle collection-name cond)))
+  (model/find-models
+   collection-name
+   cond
+   (fn [{:keys [_id body answer category value]}]
+     (->Question _id body answer category value))))
 
 (defn id-exists? 
   "ObjectId => Boolean"

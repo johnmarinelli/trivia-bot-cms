@@ -20,13 +20,8 @@
                  ]
   :plugins [[lein-ring "0.9.7"]
             [lein-environ "1.1.0"]
-            [lein-cljsbuild "1.1.4"]]
-
-  :cljsbuild {:builds [{:source-paths ["src-cljs"]
-                        :compiler {:output-to "target/app.js"
-                                   :optimizations :whitespace
-                                   :preamble []
-                                   :pretty-print true}}]}
+            [lein-cljsbuild "1.1.4"]
+            [com.jakemccrary/lein-test-refresh "0.17.0"]]
 
   :ring {:handler trivia-cms.handler/app}
   :profiles
