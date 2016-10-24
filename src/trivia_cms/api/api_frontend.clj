@@ -14,6 +14,21 @@
   (:use [ring.util.response :only [response not-found]] ; wrap json response
 ))
 
+(defn trailing-slash-middleware
+  "Modifies the request uri before calling the handler.
+  Removes a single trailing slash from the end of the uri if present.
+
+  Useful for handling optional trailing slashes until Compojure's route matching syntax supports regex.
+  Adapted from http://stackoverflow.com/questions/8380468/compojure-regex-for-matching-a-trailing-slash"
+  [handler]
+  (fn [request]
+    (let [uri (:uri request)]
+      (handler
+       (assoc request :uri (if (and (not (= "/" uri))
+                                    (.endsWith uri "/"))
+                             (subs uri 0 (dec (count uri)))
+                             uri))))))
+
 (defroutes api-routes
 
   (GET "/api/quizzes" 
@@ -44,12 +59,14 @@
 
   (POST "/api/quizzes/create" req
         (let [params (:params req)
+              z (println req)
               quiz-name (:quiz-name params)
               questions (or (:questions params) [])
               validated (not (some nil? [params quiz-name]))]
           (if (not validated)
             {:status 400 
-             :body {:error-message  "Name is required when creating quizzes."} }
+             :body {:error-message  
+                    (str "Name is required when creating quizzes. Given: " params)} }
             (response 
              (-> (quiz/create params)
                  (quiz/serialize))))))
@@ -84,6 +101,7 @@
 (def api
   (->
    api-routes
+   (trailing-slash-middleware)
    (wrap-defaults api-defaults)
    (wrap-json-params)
    (wrap-json-response)))
