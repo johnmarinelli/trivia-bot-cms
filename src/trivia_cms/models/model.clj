@@ -13,14 +13,14 @@
      cond
      {$set {key val}}
      {:return-new true})
-    (catch Exception e (str (.getMessage e)))))
+    (catch Exception e (println (str "Exception: " (.getMessage e))))))
 
 (defn -find-model-by-id 
   "Finds models based on id."
   [^String collection-name ^String id]
   (try
     (conj [] (mc/find-one-as-map db-handle collection-name {:_id (ObjectId. id)}))
-    (catch Exception e (str (.getMessage e)))))
+    (catch Exception e (println (str "Exception: " (.getMessage e))))))
 
 (defn find-models
   "Finds models based on given hash of conditions.

@@ -120,6 +120,14 @@
       (is (= (:name parsed-response-body) (:quiz-name test-quiz-1) ))
       (is (= (:question-ids parsed-response-body)
              (map #(.toString %) (:questions test-quiz-1))))))
+
+  (testing "get a quiz by id - invalid id"
+    (let [id "80d8f16cd7e947491eed7f2"
+          response (app (mock/request :get (str "/api/quizzes/" id)))
+          parsed-response-body (keywordize-keys (json/read-str (:body response)))]
+      (is (= (:status response) 200))
+      (is (not (nil? (re-find (re-pattern id)
+                              (:error-message (keywordize-keys (json/read-str (:body response))))))))))
   
   (testing "create quizzes api"
     (let [response (app (->

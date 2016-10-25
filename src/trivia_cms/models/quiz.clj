@@ -57,7 +57,6 @@
              {:_id quiz-id}
              {$pullAll { :questions ids}}
              {:return-new true})]
-      (println r)
       (adapter r))))
 
 (defn create [params]

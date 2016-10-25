@@ -50,16 +50,16 @@
   ; assume anything longer than 16 characters is a quiz id.
   (GET ["/api/quizzes/:id" :id #".{17,}"]
        [id]
-       (let [quiz (first (quiz/find-models {:_id id}))]
-         (if (nil? quiz)
-           (not-found {:error-message (str "Quiz with id '" id "' not found.")})
-           (response
-            (-> quiz
-                (quiz/serialize))))))
+       (let [api-res (quiz/find-models {:_id id})]
+         (if (nil? api-res)
+           (response {:error-message (str "Quiz with id '" id "' not found.")})
+           (let [quiz (first api-res)] 
+             (response
+              (-> quiz
+                  (quiz/serialize)))))))
 
   (POST "/api/quizzes/create" req
         (let [params (:params req)
-              z (println req)
               quiz-name (:quiz-name params)
               questions (or (:questions params) [])
               validated (not (some nil? [params quiz-name]))]
@@ -101,9 +101,9 @@
 (def api
   (->
    api-routes
-   (trailing-slash-middleware)
    (wrap-defaults api-defaults)
    (wrap-json-params)
-   (wrap-json-response)))
+   (wrap-json-response)
+   (trailing-slash-middleware)))
 
 
