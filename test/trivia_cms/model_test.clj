@@ -17,7 +17,7 @@
 (def test-quiz-1
   (->Quiz (ObjectId.) 
           "test-quiz-1"
-          [(:_id test-question-1)]))
+          [(.toString (:_id test-question-1))]))
 
 (defn init-db []
   (println "Seeding test database...")
@@ -69,7 +69,7 @@
                             (first
                              (quiz/find-models 
                               {:_id (.toString (:_id test-quiz-1))}))))
-            res (quiz/remove-questions test-quiz-1 [test-question-1])]
+            res (quiz/remove-questions test-quiz-1 [(:_id test-question-1)])]
         (is (= (count (:questions res)) (dec num-questions)))))
 
     (testing "quiz models - create with no questions"
