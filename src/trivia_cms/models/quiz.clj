@@ -47,9 +47,9 @@
 (defn remove-questions 
   "Quiz [Question] => Quiz'"
   [^Quiz quiz questions]
-  (let [ids (if (instance? String (first questions)) 
-              (map #(ObjectId. %) questions)
-              (map :_id questions))
+  (let [ids (if (instance? ObjectId (first questions)) 
+              (map #(.toString %) questions)
+              (identity questions))
         quiz-id (:_id quiz)]
     (let [r  (mc/find-and-modify
              db-handle
