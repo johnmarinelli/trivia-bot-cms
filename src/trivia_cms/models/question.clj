@@ -3,20 +3,33 @@
             [monger.collection :as mc]
             [trivia-cms.db.config :refer :all]
             [trivia-cms.models.model :as model]
-            [trivia-cms.errors.api-error :refer [api-error]])
+            [trivia-cms.errors.api-error :refer [api-error]]
+            [trivia-cms.models.public-api :as public-api :refer [IPublicAPI]])
   (:use monger.operators)
   (:import org.bson.types.ObjectId))
 
 (def collection-name "questions")
 
-(defrecord Question [_id body answer category value])
+(defrecord Question [_id body answer category value]
+  IPublicAPI
+  (serialize [this]
+    {:id (.toString _id)
+     :body body
+     :answer answer
+     :category category
+     :value value}))
+
+(defn adapter [{:keys [_id body answer category value]}]
+  (if (some nil? [_id body answer category value])
+    nil
+    (->Question _id body answer category value)))
 
 (defn find-models [cond]
-  (model/find-models
-   collection-name
-   cond
-   (fn [{:keys [_id body answer category value]}]
-     (->Question _id body answer category value))))
+  (let [m (model/find-models
+           collection-name
+           cond
+           adapter)]    
+    m))
 
 (defn id-exists? 
   "ObjectId => Boolean"
@@ -34,8 +47,7 @@
                                  body
                                  answer
                                  category
-                                 value)
-            unique? (not (id-exists? question))]
+                                 value)]
         (mc/insert-and-return db-handle collection-name question)
         question)
       (api-error "Question failed to create."))))

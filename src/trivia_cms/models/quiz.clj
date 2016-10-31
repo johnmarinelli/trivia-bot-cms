@@ -2,47 +2,54 @@
   (:require [trivia-cms.errors.api-error :refer [api-error]]
             [trivia-cms.models.model :as model]
             [trivia-cms.models.question :as question]
+            [trivia-cms.db.config :refer :all]
+            [trivia-cms.models.public-api :as public-api :refer [IPublicAPI]]
             [monger.core :as mg]
-            [monger.collection :as mc]
-            [trivia-cms.db.config :refer :all])
+            [monger.collection :as mc])
   (:use monger.operators)
   (:import org.bson.types.ObjectId))
 
 (def collection-name "quizzes")
 
-; Since we have a public API for quizzes,
-; we define an interface between the app and the public facing API.
-(defprotocol PublicAPI
-  (serialize [this]))
+(defn get-quiz-questions [question-ids]
+  (flatten 
+   (map
+    (fn [qid]
+      (question/find-models {:_id qid}))
+    question-ids)))
 
 (defrecord Quiz [_id quiz-name questions]
-  PublicAPI
-
+  IPublicAPI
   (serialize [this]
-    (let [id (.toString _id)]
+    (let [id (.toString _id)
+          question-models (get-quiz-questions questions)]
       {:id id
        :name quiz-name
-       :question-ids (map #(.toString %) questions)})))
+       :question-ids (map 
+                      (fn [q] (public-api/serialize q)) 
+                      (filter identity question-models))})))
 
-(defn adapter [q] 
-  (->Quiz (:_id q) (:quiz-name q) (:questions q)))
+(defn adapter [{:keys [_id quiz-name questions]}] 
+  (->Quiz _id quiz-name questions))
 
 (defn find-models [cond]
-  (model/find-models 
-   collection-name 
-   cond 
-   adapter))
+  (let [m (model/find-models 
+           collection-name 
+           cond 
+           adapter)]
+    m))
 
+; adds question ids to quiz 'questions'.  need to rename
 (defn add-questions 
   "Quiz [Question] => Quiz'"
   [^Quiz quiz questions]
-  (adapter
-   (mc/find-and-modify 
-    db-handle 
-    collection-name
-    {:_id (:_id quiz)}
-    {$pushAll {:questions (map #(.toString (:_id %)) questions)}}
-    {:return-new true})))
+  (let [res (mc/find-and-modify 
+             db-handle 
+             collection-name
+             {:_id (:_id quiz)}
+             {$pushAll {:questions (map #(.toString (:_id %)) questions)}}
+             {:return-new true})]
+    (adapter res)))
 
 (defn remove-questions 
   "Quiz [Question] => Quiz'"
@@ -57,22 +64,36 @@
              {:return-new true})]
       (adapter r))))
 
+(defn -create-questions-for-quiz [questions]
+  (let [res (map question/create (flatten (conj [] questions)))] 
+    res))
+
 (defn create [params]
   (let [questions (or (:questions params) [])
         quiz-name (:quiz-name params)
-        validated (not (or (nil? quiz-name) (empty? quiz-name)))]
+        validated (not (or (nil? quiz-name) (empty? quiz-name)))
+        quiz-id (if (not (nil? (:_id params)))
+                          (ObjectId. (:_id params))
+                          (ObjectId.))]
     (if validated
-      (let [quiz (->Quiz (or 
-                          (:_id params) 
-                          (ObjectId.)) 
+      (let [quiz (->Quiz quiz-id
                          (:quiz-name params)
-                         (map :_id questions))]
-        (mc/insert-and-return db-handle collection-name (dissoc quiz :questions))
+                         [])]
         (if (not (empty? questions))
-          (for [q questions]
-            (question/create q))
-          (add-questions quiz questions))
-        quiz)
+          (do
+            (let [qids (map 
+                        (fn [q] (.toString (:_id q))) 
+                        (-create-questions-for-quiz questions))
+                  new-quiz (update-in 
+                            quiz 
+                            [:questions]
+                            (fn [qs] 
+                              (concat qs qids)))]
+              (let [res (mc/insert-and-return db-handle collection-name new-quiz)]
+                new-quiz)))
+          (do
+            (mc/insert-and-return db-handle collection-name quiz)
+            quiz)))
       (api-error "Quiz failed to create."))))
 
 (defn destroy [^String id]

@@ -14,6 +14,7 @@
               "test question category"
               1
               "test question answer"))
+
 (def test-quiz-1
   (->Quiz (ObjectId.) 
           "test-quiz-1"

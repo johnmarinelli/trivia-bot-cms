@@ -9,7 +9,8 @@
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
 
             [trivia-cms.models.quiz :as quiz]
-            [trivia-cms.models.question :as question])
+            [trivia-cms.models.question :as question]
+            [trivia-cms.models.public-api :as public-api])
 
   (:use [ring.util.response :only [response not-found]] ; wrap json response
 ))
@@ -34,7 +35,7 @@
   (GET "/api/quizzes" 
        [request] 
        (let [res (quiz/find-models {})]
-         (map #(quiz/serialize %) res)))
+         (map #(public-api/serialize %) res)))
 
   (GET ["/api/quizzes/:name" :name #".{1,16}"]
        [name]
@@ -43,7 +44,7 @@
            (not-found {:error-message (str "Quiz '" name "' not found.")})
            (response 
             (-> (first quizzes)
-                (quiz/serialize))))))
+                (public-api/serialize))))))
 
   ; /.{n,}/ is regex for "anything with n characters".
   ; since question names are capped to 16 characters, we 
@@ -56,7 +57,7 @@
            (let [quiz (first api-res)] 
              (response
               (-> quiz
-                  (quiz/serialize)))))))
+                  (public-api/serialize)))))))
 
   (POST "/api/quizzes/create" req
         (let [params (:params req)
@@ -69,7 +70,7 @@
                     (str "Name is required when creating quizzes. Given: " params)} }
             (response 
              (-> (quiz/create params)
-                 (quiz/serialize))))))
+                 (public-api/serialize))))))
 
   (POST ["/api/quizzes/:quiz-name/questions" :quiz-name #".{1,16}"]
         [quiz-name & params]
@@ -81,8 +82,10 @@
              :body {:error-message (str "Question could not be created.  Were all values filled out?  Is it a valid quiz?")}}
             (let [question (question/create params)]
               (let [new-quiz (quiz/add-questions quiz [question])]
+                (println "API FRONTEND OLD QUIZ" quiz)
+                (println "API FRONTEND NEW QUIZ" new-quiz)
                 (response
-                 (quiz/serialize new-quiz)))))))
+                 (public-api/serialize new-quiz)))))))
 
   (DELETE "/api/quizzes/:id" [id]
           (let [num-deleted (quiz/destroy id)]
@@ -96,7 +99,7 @@
           (let [quiz (first (quiz/find-models {:_id quiz-id}))
                 res (quiz/remove-questions quiz [question-id])]
             (response 
-             (quiz/serialize res)))))
+             (public-api/serialize res)))))
 
 (def api
   (->
