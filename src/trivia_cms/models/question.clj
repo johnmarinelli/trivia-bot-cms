@@ -8,10 +8,12 @@
   (:use monger.operators)
   (:import org.bson.types.ObjectId))
 
+
 (def collection-name "questions")
 
 (defrecord Question [_id body answer category value]
   IPublicAPI
+
   (serialize [this]
     {:id (.toString _id)
      :body body

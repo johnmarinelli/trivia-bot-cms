@@ -82,8 +82,6 @@
              :body {:error-message (str "Question could not be created.  Were all values filled out?  Is it a valid quiz?")}}
             (let [question (question/create params)]
               (let [new-quiz (quiz/add-questions quiz [question])]
-                (println "API FRONTEND OLD QUIZ" quiz)
-                (println "API FRONTEND NEW QUIZ" new-quiz)
                 (response
                  (public-api/serialize new-quiz)))))))
 
