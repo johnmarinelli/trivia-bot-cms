@@ -41,17 +41,23 @@
   (deftest test-quizzes
 
     (testing "quiz models - find by id"
-      (let [id (.toString (:_id test-question-1))
-            res (quiz/find-models (:_id id))]
+      (let [id (.toString (:_id test-quiz-1))
+            res (quiz/find-models {:_id id})]
         (is (= (count res) 1))
         (is (= (first res) test-quiz-1))))
 
 
     (testing "quiz models - find by name"
-      (let [name (:quiz-name test-question-1)
-            res (quiz/find-models (:quiz-name name))]
+      (let [name (:quiz-name test-quiz-1)
+            res (quiz/find-models {:quiz-name name})]
         (is (= (count res) 1))
         (is (= (first res) test-quiz-1))))
+
+    (testing "quiz models - find by INVALID name"
+      (let [name "invalid"
+            res (quiz/find-models {:quiz-name name})]
+        (is (= (count res) 0))
+        (is (= (first res) nil))))
 
     (testing "quiz models - add questions"
       (let [question (->Question (ObjectId.)
