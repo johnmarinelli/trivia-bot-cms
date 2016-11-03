@@ -16,7 +16,7 @@
                                                     com.sun.jdmk/jmxtools
                                                     com.sun.jmx/jmxri]] ; logging
                  [environ "1.1.0"]  ; environment manager
-                 [reagent "0.6.0"] ; react interface
+                 [inflections "0.12.2"] ; rails like english idioms (pluralize)
                  ]
   :plugins [[lein-ring "0.9.7"]
             [lein-environ "1.1.0"]

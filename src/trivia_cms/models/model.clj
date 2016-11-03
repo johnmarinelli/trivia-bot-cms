@@ -1,7 +1,8 @@
 (ns trivia-cms.models.model
   (:require [monger.core :as mg]
             [monger.collection :as mc]
-            [trivia-cms.db.config :refer :all])
+            [trivia-cms.db.config :refer :all]
+            [inflections.core :as inflections])
   (:import org.bson.types.ObjectId)
   (:use monger.operators))
 
@@ -38,6 +39,25 @@
         (map adapter q)))
     (map adapter
          (mc/find-maps db-handle collection-name cond))))
+
+(defn slugify-class [c]
+  (let [full-class-name (.toString c)
+        qualified-class-name (second
+                              (clojure.string/split full-class-name #"\s"))
+        class-name (last 
+                    (clojure.string/split qualified-class-name #"\."))]
+    (inflections/plural
+     (inflections/hyphenate class-name))))
+
+(defmulti find (fn [cls & args] cls))
+(defmethod find :default [cls cond adapter]
+  (let [collection-name (slugify-class cls)]
+    (if (not (nil? (:_id cond)))
+      (let [q (-find-model-by-id collection-name (.toString (:_id cond)))]
+        (when (not (nil? q)) 
+          (map adapter q)))
+      (map adapter
+           (mc/find-maps db-handle collection-name cond)))))
 
 (defprotocol IModel 
   "Interface for database-backed models"
