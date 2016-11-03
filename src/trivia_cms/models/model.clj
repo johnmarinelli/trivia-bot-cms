@@ -1,9 +1,6 @@
 (ns trivia-cms.models.model
   (:require [monger.core :as mg]
-            [monger.collection :as mc]
-            [trivia-cms.db.config :refer :all]
-            [inflections.core :as inflections])
-  (:import org.bson.types.ObjectId)
+            [monger.collection :as mc])
   (:use monger.operators))
 
 (defn update-models [collection-name cond key val]
@@ -17,19 +14,9 @@
     (catch Exception e 
       (println (str "Exception: " (.getMessage e))))))
 
-(defn -find-model-by-id 
-  "Finds models based on id."
-  [^String collection-name ^String id]
-  (try
-    (conj [] 
-          (mc/find-one-as-map 
-           db-handle 
-           collection-name 
-           {:_id (ObjectId. id)}))
-    (catch Exception e 
-      (println (str "Exception: " (.getMessage e))))))
 
-(defn find-models
+
+(defn find-modelss
   "Finds models based on given hash of conditions.
   If :_id is present in `cond`, `find-models-by-id` is used."
   [^String collection-name cond adapter]
@@ -39,25 +26,6 @@
         (map adapter q)))
     (map adapter
          (mc/find-maps db-handle collection-name cond))))
-
-(defn slugify-class [c]
-  (let [full-class-name (.toString c)
-        qualified-class-name (second
-                              (clojure.string/split full-class-name #"\s"))
-        class-name (last 
-                    (clojure.string/split qualified-class-name #"\."))]
-    (inflections/plural
-     (inflections/hyphenate class-name))))
-
-(defmulti find (fn [cls & args] cls))
-(defmethod find :default [cls cond adapter]
-  (let [collection-name (slugify-class cls)]
-    (if (not (nil? (:_id cond)))
-      (let [q (-find-model-by-id collection-name (.toString (:_id cond)))]
-        (when (not (nil? q)) 
-          (map adapter q)))
-      (map adapter
-           (mc/find-maps db-handle collection-name cond)))))
 
 (defprotocol IModel 
   "Interface for database-backed models"

@@ -2,12 +2,11 @@
   (:require [monger.core :as mg]
             [monger.collection :as mc]
             [trivia-cms.db.config :refer :all]
-            [trivia-cms.models.model :as model]
             [trivia-cms.errors.api-error :refer [api-error]]
+            [trivia-cms.models.orm :refer [find adapter]]
             [trivia-cms.models.public-api :as public-api :refer [IPublicAPI]])
   (:use monger.operators)
   (:import org.bson.types.ObjectId))
-
 
 (def collection-name "questions")
 
@@ -21,22 +20,23 @@
      :category category
      :value value}))
 
-(defn adapter [{:keys [_id body answer category value]}]
+(defmethod adapter Question [_ attrs]
+  (let [{:keys [_id body answer category value]} attrs] 
+    (if (some nil? [_id body answer category value])
+      nil
+      (->Question _id body answer category value))))
+
+(defn question-adapter [{:keys [_id body answer category value]}]
   (if (some nil? [_id body answer category value])
     nil
     (->Question _id body answer category value)))
 
-(defn find-models [cond]
-  (let [m (model/find-models
-           collection-name
-           cond
-           adapter)]    
-    m))
-
-(defn id-exists? 
-  "ObjectId => Boolean"
-  [id]
-  (> (count (find-models {:_id id})) 0))
+(comment(defn find-models [cond]
+   (let [m (model/find-modelss
+            collection-name
+            cond
+            question-adapter)]    
+     m)))
 
 (defn create [params]
   (let [{:keys [body answer category value]} params

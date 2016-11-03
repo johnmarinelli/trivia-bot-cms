@@ -1,13 +1,14 @@
 (ns trivia-cms.models.quiz
   (:require [trivia-cms.errors.api-error :refer [api-error]]
-            [trivia-cms.models.model :as model]
+            [trivia-cms.models.orm :refer [find adapter]]
             [trivia-cms.models.question :as question]
             [trivia-cms.db.config :refer :all]
             [trivia-cms.models.public-api :as public-api :refer [IPublicAPI]]
             [monger.core :as mg]
             [monger.collection :as mc])
   (:use monger.operators)
-  (:import org.bson.types.ObjectId))
+  (:import [org.bson.types ObjectId]
+           [trivia_cms.models.question Question]))
 
 (def collection-name "quizzes")
 
@@ -15,7 +16,8 @@
   (flatten 
    (map
     (fn [qid]
-      (question/find-models {:_id qid}))
+      (find Question {:_id qid})
+      (comment(question/find-models {:_id qid})))
     question-ids)))
 
 (defrecord Quiz [_id quiz-name questions]
@@ -29,15 +31,20 @@
                       (fn [q] (public-api/serialize q)) 
                       (filter identity question-models))})))
 
-(defn adapter [{:keys [_id quiz-name questions]}] 
+(defmethod adapter Quiz [_ attrs]
+  (let [{:keys [_id quiz-name questions]} attrs]
+    (when (not (nil? quiz-name)) 
+      (->Quiz _id quiz-name questions))))
+
+(defn quiz-adapter [{:keys [_id quiz-name questions]}] 
   (->Quiz _id quiz-name questions))
 
-(defn find-models [cond]
-  (let [m (model/find-models 
-           collection-name 
-           cond 
-           adapter)]
-    m))
+(comment(defn find-models [cond]
+   (let [m (model/find-modelss
+            collection-name 
+            cond 
+            quiz-adapter)]
+     m)))
 
 ; adds question ids to quiz 'questions'.  need to rename
 (defn add-questions 
