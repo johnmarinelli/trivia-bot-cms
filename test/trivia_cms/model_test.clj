@@ -4,6 +4,7 @@
             [trivia-cms.db.config :refer :all]
             [trivia-cms.models.quiz :refer [->Quiz] :as quiz]
             [trivia-cms.models.question :refer [->Question] :as question]
+            [trivia-cms.models.orm :as orm :refer [find]]
             [monger.core :as mg]
             [monger.collection :as mc])
   (:import [org.bson.types ObjectId]))

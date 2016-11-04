@@ -1,6 +1,6 @@
 (ns trivia-cms.models.quiz
   (:require [trivia-cms.errors.api-error :refer [api-error]]
-            [trivia-cms.models.orm :refer [find adapter]]
+            [trivia-cms.models.orm :as orm :refer [find adapter]]
             [trivia-cms.models.question :as question]
             [trivia-cms.db.config :refer :all]
             [trivia-cms.models.public-api :as public-api :refer [IPublicAPI]]
@@ -16,7 +16,7 @@
   (flatten 
    (map
     (fn [qid]
-      (find Question {:_id qid})
+      (orm/find Question {:_id qid} orm/adapter)
       (comment(question/find-models {:_id qid})))
     question-ids)))
 
@@ -31,20 +31,17 @@
                       (fn [q] (public-api/serialize q)) 
                       (filter identity question-models))})))
 
-(defmethod adapter Quiz [_ attrs]
+(defmethod orm/adapter trivia_cms.models.quiz.Quiz [_ attrs]
   (let [{:keys [_id quiz-name questions]} attrs]
     (when (not (nil? quiz-name)) 
       (->Quiz _id quiz-name questions))))
 
-(defn quiz-adapter [{:keys [_id quiz-name questions]}] 
-  (->Quiz _id quiz-name questions))
+(defn quiz-adapter [cls params] 
+  (let [{:keys [_id quiz-name questions]} params] 
+    (->Quiz _id quiz-name questions)))
 
-(comment(defn find-models [cond]
-   (let [m (model/find-modelss
-            collection-name 
-            cond 
-            quiz-adapter)]
-     m)))
+(defn find-models [cond]
+  (orm/find Quiz cond orm/adapter))
 
 ; adds question ids to quiz 'questions'.  need to rename
 (defn add-questions 
@@ -56,7 +53,7 @@
              {:_id (:_id quiz)}
              {$pushAll {:questions (map #(.toString (:_id %)) questions)}}
              {:return-new true})]
-    (adapter res)))
+    (orm/adapter Quiz res)))
 
 (defn remove-questions 
   "Quiz [Question] => Quiz'"
@@ -69,7 +66,7 @@
              {:_id quiz-id}
              {$pullAll { :questions ids}}
              {:return-new true})]
-      (adapter r))))
+      (orm/adapter Quiz r))))
 
 (defn -create-questions-for-quiz [questions]
   (let [res (map question/create (flatten (conj [] questions)))] 

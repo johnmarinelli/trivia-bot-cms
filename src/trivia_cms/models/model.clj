@@ -1,6 +1,7 @@
 (ns trivia-cms.models.model
   (:require [monger.core :as mg]
-            [monger.collection :as mc])
+            [monger.collection :as mc]
+            [trivia-cms.db.config :refer :all])
   (:use monger.operators))
 
 (defn update-models [collection-name cond key val]
@@ -15,17 +16,16 @@
       (println (str "Exception: " (.getMessage e))))))
 
 
-
-(defn find-modelss
-  "Finds models based on given hash of conditions.
+(comment(defn find-modelss
+   "Finds models based on given hash of conditions.
   If :_id is present in `cond`, `find-models-by-id` is used."
-  [^String collection-name cond adapter]
-  (if (not (nil? (:_id cond)))
-    (let [q (-find-model-by-id collection-name (.toString (:_id cond)))]
-      (when (not (nil? q)) 
-        (map adapter q)))
-    (map adapter
-         (mc/find-maps db-handle collection-name cond))))
+   [^String collection-name cond adapter]
+   (if (not (nil? (:_id cond)))
+     (let [q (-find-model-by-id collection-name (.toString (:_id cond)))]
+       (when (not (nil? q)) 
+         (map adapter q)))
+     (map adapter
+          (mc/find-maps db-handle collection-name cond)))))
 
 (defprotocol IModel 
   "Interface for database-backed models"
@@ -54,12 +54,12 @@
       nil
       (->Question2 _id body answer category value))))
 
-(defn find-models-2-2 [this cond]
-  (if (not (nil? (:_id cond)))
-    (let [id (.toString (:_id cond))
-          q (-find-model-by-id (table-name-2 this) id)]
-      (map (partial adapter this) q))
-    (let [res (mc/find-maps db-handle (table-name-2 this) cond)] 
-      (map (partial adapter this) res))))
+(comment(defn find-models-2-2 [this cond]
+   (if (not (nil? (:_id cond)))
+     (let [id (.toString (:_id cond))
+           q (-find-model-by-id (table-name-2 this) id)]
+       (map (partial adapter this) q))
+     (let [res (mc/find-maps db-handle (table-name-2 this) cond)] 
+       (map (partial adapter this) res)))))
 
 

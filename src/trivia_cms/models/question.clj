@@ -3,7 +3,7 @@
             [monger.collection :as mc]
             [trivia-cms.db.config :refer :all]
             [trivia-cms.errors.api-error :refer [api-error]]
-            [trivia-cms.models.orm :refer [find adapter]]
+            [trivia-cms.models.orm :as orm]
             [trivia-cms.models.public-api :as public-api :refer [IPublicAPI]])
   (:use monger.operators)
   (:import org.bson.types.ObjectId))
@@ -20,7 +20,7 @@
      :category category
      :value value}))
 
-(defmethod adapter Question [_ attrs]
+(defmethod orm/adapter trivia_cms.models.question.Question [_ attrs]
   (let [{:keys [_id body answer category value]} attrs] 
     (if (some nil? [_id body answer category value])
       nil
@@ -31,12 +31,8 @@
     nil
     (->Question _id body answer category value)))
 
-(comment(defn find-models [cond]
-   (let [m (model/find-modelss
-            collection-name
-            cond
-            question-adapter)]    
-     m)))
+(defn find-models [cond]
+  (orm/find Question cond orm/adapter))
 
 (defn create [params]
   (let [{:keys [body answer category value]} params
