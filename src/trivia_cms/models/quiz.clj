@@ -13,11 +13,10 @@
 (def collection-name "quizzes")
 
 (defn get-quiz-questions [question-ids]
-  (flatten 
+  (flatten
    (map
     (fn [qid]
-      (orm/find Question {:_id qid} orm/adapter)
-      (comment(question/find-models {:_id qid})))
+      (question/find-models {:_id qid}))
     question-ids)))
 
 (defrecord Quiz [_id quiz-name questions]
