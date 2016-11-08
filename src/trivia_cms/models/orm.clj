@@ -37,3 +37,21 @@
           (map (partial adapter cls) q)))
       (map (partial adapter cls)
            (mc/find-maps db-handle collection-name cond)))))
+
+(defmulti update (fn [cls & args] cls))
+(defmethod update :default [cls cond update-expr adapter]
+  (let [collection-name (slugify-class cls)]
+    (let [c (if (nil? (:_id cond)) 
+              cond
+              (assoc cond :_id (ObjectId. (.toString (:_id cond)))))]
+      (try
+        (adapter 
+         cls
+         (mc/find-and-modify
+          db-handle
+          collection-name
+          c
+          update-expr
+          {:return-new true}))
+              (catch Exception e
+                (println (str "Exception: " (.getMessage e))))))))

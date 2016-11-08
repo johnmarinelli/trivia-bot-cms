@@ -54,18 +54,26 @@
              {:return-new true})]
     (orm/adapter Quiz res)))
 
-(defn remove-questions 
-  "Quiz [Question] => Quiz'"
-  [^Quiz quiz questions]
-  (let [ids (map #(.toString %) questions)
-        quiz-id (:_id quiz)]
-    (let [r  (mc/find-and-modify
-             db-handle
-             collection-name
-             {:_id quiz-id}
-             {$pullAll { :questions ids}}
-             {:return-new true})]
-      (orm/adapter Quiz r))))
+(defn remove-questions
+  [^Quiz quiz question-ids]
+  (let [ids (map #(.toString %) question-ids)
+        id (.toString (:_id quiz))
+        r (orm/update Quiz {:_id id} {$pullAll {:questions ids}} orm/adapter)]
+    (println r)
+    r))
+
+(comment(defn remove-questions 
+   "Quiz [Question] => Quiz'"
+   [^Quiz quiz questions]
+   (let [ids (map #(.toString %) questions)
+         quiz-id (:_id quiz)]
+     (let [r  (mc/find-and-modify
+               db-handle
+               collection-name
+               {:_id quiz-id}
+               {$pullAll { :questions ids}}
+               {:return-new true})]
+       (orm/adapter Quiz r)))))
 
 (defn -create-questions-for-quiz [questions]
   (let [res (map question/create (flatten (conj [] questions)))] 

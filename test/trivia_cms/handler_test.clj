@@ -174,8 +174,11 @@
       (is (= (dec num-questions) 
              (count (:question-ids response))))))
 
-  (testing "remove invalid question from quiz api"
-    (let [url (str "/api/quizzes/" (:_id test-quiz-2) "/questions/" 1)
-          response (app (mock/request :delete url))]
-      (is (= (:status response) 1)))))
+  (testing "remove invalid question from quiz api does NOT change question count"
+    (let [num-questions (count (:questions test-quiz-2))
+          url (str "/api/quizzes/" (:_id test-quiz-2) "/questions/" 1)
+          response (app (mock/request :delete url))
+          parsed-response-body (keywordize-keys (json/read-str (:body response)))]
+      (is (= (:status response) 200))
+      (is (= (count (:question-ids parsed-response-body)) num-questions)))))
 
