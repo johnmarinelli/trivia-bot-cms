@@ -3,7 +3,7 @@
             [trivia-cms.models.orm :as orm :refer [find adapter]]
             [trivia-cms.models.question :as question]
             [trivia-cms.db.config :refer :all]
-            [trivia-cms.models.public-api :as public-api :refer [IPublicAPI]]
+            [trivia-cms.api.public-api :as public-api :refer [IPublicAPI]]
             [monger.core :as mg]
             [monger.collection :as mc])
   (:use monger.operators)

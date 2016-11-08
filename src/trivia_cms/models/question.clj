@@ -4,7 +4,7 @@
             [trivia-cms.db.config :refer :all]
             [trivia-cms.errors.api-error :refer [api-error]]
             [trivia-cms.models.orm :as orm]
-            [trivia-cms.models.public-api :as public-api :refer [IPublicAPI]])
+            [trivia-cms.api.public-api :as public-api :refer [IPublicAPI]])
   (:use monger.operators)
   (:import org.bson.types.ObjectId))
 

@@ -10,7 +10,7 @@
 
             [trivia-cms.models.quiz :as quiz]
             [trivia-cms.models.question :as question]
-            [trivia-cms.models.public-api :as public-api])
+            [trivia-cms.api.public-api :as public-api])
 
   (:use [ring.util.response :only [response not-found]] ; wrap json response
 ))

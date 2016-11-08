@@ -7,7 +7,7 @@
             [trivia-cms.db.config :refer :all]
             [trivia-cms.models.quiz :refer [->Quiz] :as quiz]
             [trivia-cms.models.question :refer [->Question] :as question]
-            [trivia-cms.models.public-api :as public-api]
+            [trivia-cms.api.public-api :as public-api]
             [monger.core :as mg]
             [monger.collection :as mc])
   (:use [clojure.walk])
@@ -172,5 +172,10 @@
           response (app (mock/request :delete url))]
       (is (= (:status response) 200))
       (is (= (dec num-questions) 
-             (count (:question-ids response)))))))
+             (count (:question-ids response))))))
+
+  (testing "remove invalid question from quiz api"
+    (let [url (str "/api/quizzes/" (:_id test-quiz-2) "/questions/" 1)
+          response (app (mock/request :delete url))]
+      (is (= (:status response) 1)))))
 
