@@ -15,7 +15,7 @@
 
   (serialize [this]
     {:id (.toString _id)
-     :body body
+     :question body
      :answer answer
      :category category
      :value value}))
