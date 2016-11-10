@@ -85,19 +85,34 @@
                 (response
                  (public-api/serialize new-quiz)))))))
 
-  (DELETE "/api/quizzes/:id" [id]
+  (DELETE "/api/quizzes/:id"
+          [id]
           (let [num-deleted (quiz/destroy id)]
             (if (> num-deleted 0)
               (response {:num-deleted num-deleted})
               (not-found 
-               (json/write-str {:error-message (str "Quiz '" name "' not found.")})))))
+               (json/write-str {:error-message (str "Quiz '" id "' not found.")})))))
 
-  (DELETE "/api/quizzes/:quiz-id/questions/:question-id" 
+  (DELETE ["/api/quizzes/:quiz-name/questions/:question-id" 
+           :quiz-name #".{1,16}"]
+          [quiz-name question-id]
+          (let [quiz (first (quiz/find-models {:quiz-name quiz-name}))]
+            (if (not (nil? quiz))
+              (let [res (quiz/remove-questions quiz [question-id])]
+                (response 
+                 (public-api/serialize res)))
+              {:status 400
+               :body {:error-message (str "Quiz " quiz-name " not found.")}})))
+
+  (DELETE ["/api/quizzes/:quiz-id/questions/:question-id" :quiz-id #".{17,}"] 
           [quiz-id question-id]
-          (let [quiz (first (quiz/find-models {:_id quiz-id}))
-                res (quiz/remove-questions quiz [question-id])]
-            (response 
-             (public-api/serialize res)))))
+          (let [quiz (first (quiz/find-models {:_id quiz-id}))]
+            (if (not (nil? quiz))
+              (let [res (quiz/remove-questions quiz [question-id])]
+                (response 
+                 (public-api/serialize res)))
+              {:status 400
+               :body {:error-message (str "Quiz " quiz-id " not found.")}}))))
 
 (def api
   (->
@@ -106,5 +121,3 @@
    (wrap-json-params)
    (wrap-json-response)
    (trailing-slash-middleware)))
-
-

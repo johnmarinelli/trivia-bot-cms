@@ -46,34 +46,17 @@
 (defn add-questions 
   "Quiz [Question] => Quiz'"
   [^Quiz quiz questions]
-  (let [res (mc/find-and-modify 
-             db-handle 
-             collection-name
-             {:_id (:_id quiz)}
-             {$pushAll {:questions (map #(.toString (:_id %)) questions)}}
-             {:return-new true})]
-    (orm/adapter Quiz res)))
+  (let [ids (map #(.toString (:_id %)) questions)
+        quiz-id (.toString (:_id quiz))
+        res (orm/update Quiz {:_id quiz-id} {$pushAll {:questions ids}} orm/adapter)]
+    res))
 
 (defn remove-questions
   [^Quiz quiz question-ids]
   (let [ids (map #(.toString %) question-ids)
-        id (.toString (:_id quiz))
-        r (orm/update Quiz {:_id id} {$pullAll {:questions ids}} orm/adapter)]
-    (println r)
-    r))
-
-(comment(defn remove-questions 
-   "Quiz [Question] => Quiz'"
-   [^Quiz quiz questions]
-   (let [ids (map #(.toString %) questions)
-         quiz-id (:_id quiz)]
-     (let [r  (mc/find-and-modify
-               db-handle
-               collection-name
-               {:_id quiz-id}
-               {$pullAll { :questions ids}}
-               {:return-new true})]
-       (orm/adapter Quiz r)))))
+        quiz-id (.toString (:_id quiz))
+        res (orm/update Quiz {:_id quiz-id} {$pullAll {:questions ids}} orm/adapter)]
+    res))
 
 (defn -create-questions-for-quiz [questions]
   (let [res (map question/create (flatten (conj [] questions)))] 
@@ -108,6 +91,10 @@
       (api-error "Quiz failed to create."))))
 
 (defn destroy [^String id]
-  (.getN
-   (mc/remove-by-id db-handle collection-name (ObjectId. id))))
+  (try
+    (.getN
+     (mc/remove-by-id db-handle collection-name (ObjectId. id)))
+    (catch Exception e (do 
+                         (println "Exception: " (.getMessage e))
+                         0))))
 

@@ -4,3 +4,7 @@
 ; we define an interface between the app and the public facing API.
 (defprotocol IPublicAPI
   (serialize [this]))
+
+(extend-protocol IPublicAPI
+  nil 
+  (serialize [_] ""))
