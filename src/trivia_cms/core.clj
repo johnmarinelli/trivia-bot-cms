@@ -1,7 +1,8 @@
 (ns trivia-cms.core
   (:require [trivia-cms.handler :refer :all]
             [trivia-cms.api.api-frontend :refer :all]
-            [ring.adapter.jetty :as ring]))
+            [ring.adapter.jetty :as ring])
+  (:gen-class))
 
 
 (defn -main []
