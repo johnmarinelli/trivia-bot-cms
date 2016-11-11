@@ -31,6 +31,9 @@
                              uri))))))
 
 (defroutes api-routes
+  (GET "/"
+       [_]
+       (response "SUP"))
 
   (GET "/api/quizzes" 
        [request] 
