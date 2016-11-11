@@ -4,14 +4,12 @@
             [environ.core :refer [env]])
   (:import [com.mongodb MongoOptions ServerAddress]))
 
-(def database (env :database-name))
 (def db-handle 
   (:db 
    (mg/connect-via-uri 
-    (clojure.string/join "/" (map env [:mongodb-uri-host :database-name]))
-)))
+    "mongodb://heroku_np83q2zj:9o8vhhj4nchpddr3ancrh0hlen@ds025389.mlab.com:25389/heroku_np83q2zj")))
 
-(comment"mongodb://heroku_np83q2zj:9o8vhhj4nchpddr3ancrh0hlen@ds025389.mlab.com:25389/heroku_np83q2zj")
+(comment)
 (comment(clojure.string/join 
          "/" 
          (map env [:mongodb-uri-host :database-name])))
