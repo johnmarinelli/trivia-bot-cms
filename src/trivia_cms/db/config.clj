@@ -9,7 +9,7 @@
   (:db (mg/connect-via-uri 
         (clojure.string/join 
          "/" 
-         (map env [:mongodb-uri :database-name])))))
+         (map env [:mongodb-uri-host :database-name])))))
 
 (def quizzes-collection-name "quizzes")
 (def questions-collection-name "questions")
