@@ -1,1 +1,1 @@
-java $JVM_OPTS -jar target/shouter-standalone.jar
+web: lein with-profile production trampoline run 
