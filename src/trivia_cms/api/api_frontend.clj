@@ -85,6 +85,20 @@
                 (response
                  (public-api/serialize new-quiz)))))))
 
+  (POST ["/api/quizzes/:quiz-id/questions" :quiz-id #".{17,}"]
+        [quiz-id & params]
+        (let [quiz (first (quiz/find-models {:_id quiz-id}))
+              {:keys [body answer category value]} params
+              validated (not (some nil? [quiz body answer category value]))]
+          (if (not validated)
+            {:status 400
+             :body {:error-message (str "Question could not be created.  Were all values filled out?  Is it a valid quiz?")}}
+            (let [question (question/create params)]
+              (let [new-quiz (quiz/add-questions quiz [question])]
+                (response
+                 (public-api/serialize new-quiz)))))))
+
+
   (DELETE "/api/quizzes/:id"
           [id]
           (let [num-deleted (quiz/destroy id)]
