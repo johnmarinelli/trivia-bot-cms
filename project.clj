@@ -44,5 +44,5 @@
                          [org.clojure/data.json "0.2.6"]]
           :env {:database-name "ltcla_quizzes_test"}}
 
-   :prod {:jvm-opts ["-Dlogfile.path=production"]
-          :env {:database-name "heroku_np83q2zj"}}})
+   :production {:jvm-opts ["-Dlogfile.path=production"]
+                :env {:database-name "heroku_np83q2zj"}}})
