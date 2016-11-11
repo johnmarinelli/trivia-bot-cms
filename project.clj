@@ -9,6 +9,7 @@
                  [hiccup "1.0.5"] ; html 
                  [ring/ring-defaults "0.2.1"] ; server
                  [ring/ring-json "0.4.0"] ; json parser
+                 [ring/ring-jetty-adapter "1.4.0"]
                  [com.novemberain/monger "3.1.0"] ; mongodb client
                  [org.clojure/tools.logging "0.3.1"] ; logging
                  [log4j/log4j "1.2.17" :exclusions [javax.mail/mail
