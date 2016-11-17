@@ -79,7 +79,7 @@
               validated (not (some nil? [quiz body answer category value]))]
           (if (not validated)
             {:status 400
-             :body {:error-message (str "Question could not be created.  Were all values filled out?  Is it a valid quiz?")}}
+             :body {:error-message (str "Question could not be created.  Were all values filled out?  Is " quiz-name " a valid quiz?")}}
             (let [question (question/create params)]
               (let [new-quiz (quiz/add-questions quiz [question])]
                 (response

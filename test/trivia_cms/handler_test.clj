@@ -73,6 +73,9 @@
    :value 2
    :_id (.toString (ObjectId.))})
 
+(def invalid-test-question-create-json
+  {:category "nothing"})
+
 (defn init-db []
   (println "Seeding test database...")
   (mc/insert db-handle quizzes-collection-name test-quiz-1)
@@ -128,6 +131,7 @@
       (is (= (:status response) 200))
       (is (not (nil? (re-find (re-pattern id)
                               (:error-message (keywordize-keys (json/read-str (:body response))))))))))
+
   (testing "create quizzes api"
     (let [response (app (->
                          (mock/request 
@@ -165,6 +169,16 @@
              (:quiz-name test-quiz-2)))
       (is (= (count (:question-ids parsed-response-body))
              (inc (count (:questions test-quiz-2)))))))
+
+  (testing "add invalid question to quiz api"
+    (let [url (str "/api/quizzes/" (:quiz-name test-quiz-2) "/questions") 
+          payload (json/write-str invalid-test-question-create-json)
+          response (app (-> (mock/request :post url payload)
+                            (mock/content-type "application/json")))
+          parsed-response-body (keywordize-keys (json/read-str (:body response)))]
+      (is (= (:status response) 400))
+      (is (= (:error-message parsed-response-body) (str "Question could not be created.  Were all values filled out?  Is " (:quiz-name test-quiz-2) " a valid quiz?")))
+))
 
   (testing "remove question from quiz api"
     (let [url (str "/api/quizzes/" (:quiz-name test-quiz-2) "/questions/" (:_id test-question-2))

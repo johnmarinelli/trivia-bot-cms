@@ -5,6 +5,13 @@
             [monger.collection :as mc])
   (:import [org.bson.types ObjectId]))
 
+; if id is nil, create a new id.
+; otherwise, return an ObjectId with value of id.
+(defn create-id [id]
+  (if (nil? id)
+    (ObjectId.)
+    (ObjectId. (.toString id))))
+
 (defn slugify-class [c]
   (let [full-class-name (.toString c)
         qualified-class-name (second
@@ -55,3 +62,14 @@
           {:return-new true}))
               (catch Exception e
                 (println (str "Exception: " (.getMessage e))))))))
+
+(defmulti create (fn [cls & args] cls))
+(defmethod create :default [cls params adapter]
+  (let [collection-name (slugify-class cls)]
+    (try
+      (adapter
+       cls
+       (mc/insert-and-return 
+        db-handle
+        collection-name 
+        params)))))

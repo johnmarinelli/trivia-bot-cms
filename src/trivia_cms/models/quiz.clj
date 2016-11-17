@@ -1,6 +1,6 @@
 (ns trivia-cms.models.quiz
   (:require [trivia-cms.errors.api-error :refer [api-error]]
-            [trivia-cms.models.orm :as orm :refer [find adapter]]
+            [trivia-cms.models.orm :as orm :refer [find adapter create-id]]
             [trivia-cms.models.question :as question]
             [trivia-cms.db.config :refer :all]
             [trivia-cms.api.public-api :as public-api :refer [IPublicAPI]]
@@ -35,10 +35,6 @@
     (when (not (nil? quiz-name)) 
       (->Quiz _id quiz-name questions))))
 
-(defn quiz-adapter [cls params] 
-  (let [{:keys [_id quiz-name questions]} params] 
-    (->Quiz _id quiz-name questions)))
-
 (defn find-models [cond]
   (orm/find Quiz cond orm/adapter))
 
@@ -66,28 +62,16 @@
   (let [questions (or (:questions params) [])
         quiz-name (:quiz-name params)
         validated (not (or (nil? quiz-name) (empty? quiz-name)))
-        quiz-id (if (not (nil? (:_id params)))
-                          (ObjectId. (:_id params))
-                          (ObjectId.))]
+        quiz-id (create-id (:_id params))]
     (if validated
-      (let [quiz (->Quiz quiz-id
-                         (:quiz-name params)
-                         [])]
-        (if (not (empty? questions))
-          (do
-            (let [qids (map 
-                        (fn [q] (.toString (:_id q))) 
-                        (-create-questions-for-quiz questions))
-                  new-quiz (update-in 
-                            quiz 
-                            [:questions]
-                            (fn [qs] 
-                              (concat qs qids)))]
-              (let [res (mc/insert-and-return db-handle collection-name new-quiz)]
-                new-quiz)))
-          (do
-            (mc/insert-and-return db-handle collection-name quiz)
-            quiz)))
+      (let [qids (map (fn [q]
+                        (when (not (nil? q))
+                          (.toString (:_id q))))
+                      (-create-questions-for-quiz questions))
+            quiz (->Quiz quiz-id 
+                         (:quiz-name params) 
+                         qids)]
+        (orm/create Quiz quiz orm/adapter))
       (api-error "Quiz failed to create."))))
 
 (defn destroy [^String id]
