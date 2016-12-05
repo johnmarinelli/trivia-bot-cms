@@ -8,10 +8,22 @@
             [trivia-cms.models.quiz :refer [->Quiz] :as quiz]
             [trivia-cms.models.question :refer [->Question] :as question]
             [trivia-cms.api.public-api :as public-api]
+            [trivia-cms.api.user-login :as login]
+            [trivia-cms.models.user :refer [create-user!]]
             [monger.core :as mg]
             [monger.collection :as mc])
   (:use [clojure.walk])
   (:import org.bson.types.ObjectId))
+
+(def quizzes-collection-name "quizzes")
+(def questions-collection-name "questions")
+(def users-collection-name "users")
+
+(def test-user
+  {:username "test" :password "test"})
+
+(defn bypass-auth [handler]
+  (assoc handler :user test-user))
 
 (def test-question-1
   (->Question
@@ -85,10 +97,18 @@
 
 (defn teardown-db []
   (println "Removing all records from test database...")
-  (mc/remove db-handle quizzes-collection-name))
+  (mc/remove db-handle users-collection-name)
+  (mc/remove db-handle quizzes-collection-name)
+  (mc/remove db-handle questions-collection-name))
 
 (defn trivia-fixture [f]
   (init-db)
+  (println test-user)
+  (create-user! test-user)
+  (app 
+   (->
+    (mock/request :post "/login" (json/write-str {:username (:username test-user) :password (:password "test-user")}))
+    (mock/content-type "application-json")))
   (f)
   (teardown-db))
 
@@ -96,7 +116,8 @@
 
 (deftest test-api
   (testing "get all quizzes api"
-    (let [response (app (mock/request :get "/api/quizzes"))]
+    (let [response (app (-> (mock/request :get "/api/quizzes")
+                            (bypass-auth)))]
       (is (= (count 
               (json/read-str 
                (:body response)))
@@ -106,7 +127,8 @@
 
   (testing "get a quiz api"
     (let [name (:quiz-name test-quiz-1)
-          response (app (mock/request :get (str "/api/quizzes/" name)))
+          response (app (-> (mock/request :get (str "/api/quizzes/" name))
+                            (bypass-auth)))
           parsed-response-body (keywordize-keys (json/read-str (:body response)))]
       (is (= (:status response) 200))
       (is (= (:id parsed-response-body) (.toString (:_id test-quiz-1))))
@@ -116,7 +138,8 @@
 
   (testing "get a quiz by id api"
     (let [id (.toString (:_id test-quiz-1))
-          response (app (mock/request :get (str "/api/quizzes/" id)))
+          response (app (-> (mock/request :get (str "/api/quizzes/" id)) 
+                            (bypass-auth)))
           parsed-response-body (keywordize-keys (json/read-str (:body response)))]
       (is (= (:status response) 200))
       (is (= (:id parsed-response-body) (.toString (:_id test-quiz-1))))
@@ -126,7 +149,8 @@
 
   (testing "get a quiz by id - invalid id"
     (let [id "80d8f16cd7e947491eed7f2"
-          response (app (mock/request :get (str "/api/quizzes/" id)))
+          response (app (-> (mock/request :get (str "/api/quizzes/" id))
+                            (bypass-auth)))
           parsed-response-body (keywordize-keys (json/read-str (:body response)))]
       (is (= (:status response) 200))
       (is (not (nil? (re-find (re-pattern id)
@@ -138,7 +162,8 @@
                           :post 
                           "/api/quizzes/create"
                           (json/write-str test-quiz-4-to-create))
-                         (mock/content-type "application/json")))
+                         (mock/content-type "application/json")
+                         (bypass-auth)))
           parsed-response-body (keywordize-keys (json/read-str (:body response)))]
       (is (= (:status response) 200))
       (is (= (:name parsed-response-body)
@@ -148,9 +173,10 @@
 
   (testing "delete quizzes api"
     (let [response (app 
-                    (mock/request 
-                     :delete 
-                     (str "/api/quizzes/" (.toString (:_id test-quiz-1)))))]
+                    (-> (mock/request 
+                         :delete 
+                         (str "/api/quizzes/" (.toString (:_id test-quiz-1))))
+                        (bypass-auth)))]
       (is (= (:status response) 200))
       (is (= (:num-deleted
               (keywordize-keys 
@@ -162,7 +188,8 @@
     (let [url (str "/api/quizzes/" (:quiz-name test-quiz-2) "/questions")
           payload (json/write-str test-question-2-create-json)
           response (app (-> (mock/request :post url payload)
-                            (mock/content-type "application/json")))
+                            (mock/content-type "application/json")
+                            (bypass-auth)))
           parsed-response-body (keywordize-keys (json/read-str (:body response)))]
       (is (= (:status response) 200))
       (is (= (:name parsed-response-body)
@@ -174,7 +201,8 @@
     (let [url (str "/api/quizzes/" (:quiz-name test-quiz-2) "/questions") 
           payload (json/write-str invalid-test-question-create-json)
           response (app (-> (mock/request :post url payload)
-                            (mock/content-type "application/json")))
+                            (mock/content-type "application/json")
+                            (bypass-auth)))
           parsed-response-body (keywordize-keys (json/read-str (:body response)))]
       (is (= (:status response) 400))
       (is (= (:error-message parsed-response-body) (str "Question could not be created.  Were all values filled out?  Is " (:quiz-name test-quiz-2) " a valid quiz?")))
@@ -183,7 +211,7 @@
   (testing "remove question from quiz api"
     (let [url (str "/api/quizzes/" (:quiz-name test-quiz-2) "/questions/" (:_id test-question-2))
           num-questions (count (:questions test-quiz-2))
-          response (app (mock/request :delete url))]
+          response (app (-> (mock/request :delete url) (bypass-auth)))]
       (is (= (:status response) 200))
       (is (= (dec num-questions) 
              (count (:question-ids response))))))
@@ -191,7 +219,7 @@
   (testing "remove question from quiz api using quiz id"
     (let [url (str "/api/quizzes/" (.toString (:_id test-quiz-2)) "/questions/" (:_id test-question-2))
           num-questions (count (:questions test-quiz-2))
-          response (app (mock/request :delete url))]
+          response (app (-> (mock/request :delete url) (bypass-auth)))]
       (is (= (:status response) 200))
       (is (= (dec num-questions) 
              (count (:question-ids response))))))
@@ -199,7 +227,7 @@
   (testing "remove invalid question from quiz api does NOT change question count"
     (let [num-questions (count (:questions test-quiz-2))
           url (str "/api/quizzes/" (:quiz-name test-quiz-2) "/questions/" 1)
-          response (app (mock/request :delete url))
+          response (app (-> (mock/request :delete url) (bypass-auth)))
           parsed-response-body (keywordize-keys (json/read-str (:body response)))]
       (is (= (:status response) 200))
       (is (= (count (:question-ids parsed-response-body)) num-questions)))))

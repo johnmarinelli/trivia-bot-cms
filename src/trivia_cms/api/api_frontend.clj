@@ -7,30 +7,22 @@
 
             [ring.middleware.json :refer [wrap-json-params wrap-json-response]]
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
+            [ring.middleware.session :refer [wrap-session]]
+            
+            [buddy.auth.accessrules :refer [restrict]]
 
             [trivia-cms.models.quiz :as quiz]
             [trivia-cms.models.question :as question]
-            [trivia-cms.api.public-api :as public-api])
+            [trivia-cms.api.user-login :as user-login]
+            [trivia-cms.api.public-api :as public-api]
+            [trivia-cms.trailing-slash-middleware :refer [trailing-slash-middleware]])
 
   (:use [ring.util.response :only [response not-found]] ; wrap json response
 ))
 
-(defn trailing-slash-middleware
-  "Modifies the request uri before calling the handler.
-  Removes a single trailing slash from the end of the uri if present.
-
-  Useful for handling optional trailing slashes until Compojure's route matching syntax supports regex.
-  Adapted from http://stackoverflow.com/questions/8380468/compojure-regex-for-matching-a-trailing-slash"
-  [handler]
-  (fn [request]
-    (let [uri (:uri request)]
-      (handler
-       (assoc request :uri (if (and (not (= "/" uri))
-                                    (.endsWith uri "/"))
-                             (subs uri 0 (dec (count uri)))
-                             uri))))))
-
 (defroutes api-routes
+  (context "/api" []
+           (restrict api-routes {:handler user-login/is-authenticated}))
 
   (GET "/api/quizzes" 
        [request] 
@@ -87,6 +79,7 @@
 
   (POST ["/api/quizzes/:quiz-id/questions" :quiz-id #".{17,}"]
         [quiz-id & params]
+
         (let [quiz (first (quiz/find-models {:_id quiz-id}))
               {:keys [body answer category value]} params
               validated (not (some nil? [quiz body answer category value]))]
@@ -134,4 +127,5 @@
    (wrap-defaults api-defaults)
    (wrap-json-params)
    (wrap-json-response)
+   (wrap-session)
    (trailing-slash-middleware)))

@@ -17,6 +17,7 @@
                                                     com.sun.jmx/jmxri]] ; logging
                  [environ "1.1.0"]  ; environment manager
                  [inflections "0.12.2"] ; rails like english idioms (pluralize)
+                 [buddy "0.8.3"] ; auths
                  ]
   :plugins [[lein-ring "0.9.7"]
             [lein-environ "1.1.0"]
