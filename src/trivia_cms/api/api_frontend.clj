@@ -22,7 +22,13 @@
 
 (defroutes api-routes
   (context "/api" []
-           (restrict api-routes {:handler user-login/is-authenticated}))
+           (restrict api-routes {:handler user-login/is-authenticated
+                                 :on-error (fn [req val] 
+                                             (let [msg (doall 
+                                                        (if (empty? val)  
+                                                          "Unauthorized" 
+                                                          val))] 
+                                               (response (str "Error: " msg))))}))
 
   (GET "/api/quizzes" 
        [request] 

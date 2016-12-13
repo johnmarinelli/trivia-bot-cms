@@ -11,7 +11,6 @@
             [ring.middleware.params :refer [wrap-params]]))
 
 (defn login [username password session]
-  (println username password)
   (if-let [user (user/check-user-password username password)]
     (assoc (response "1") :session (assoc session :identity (:id user)))
     (response "0")))
@@ -30,6 +29,7 @@
   (POST "/login" request
         (let [form-params (:params request)
               session (:session request)]
+          (println "Params:" form-params)
           (login (:username form-params) (:password form-params) session)))
   (POST "/logout" [] logout))
 
