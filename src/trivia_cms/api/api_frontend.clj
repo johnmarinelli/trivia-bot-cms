@@ -21,6 +21,7 @@
 ))
 
 (defroutes api-routes
+
   (context "/api" []
            (restrict api-routes {:handler user-login/is-authenticated
                                  :on-error (fn [req val] 
@@ -29,6 +30,10 @@
                                                           "Unauthorized" 
                                                           val))] 
                                                (response (str "Error: " msg))))}))
+
+  (GET "/"
+       [_]
+       (response "SUP"))
 
   (GET "/api/quizzes" 
        [request] 

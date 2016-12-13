@@ -2,13 +2,16 @@
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
   :min-lein-version "2.0.0"
-  :main trivia-cms.core
+  :main ^:skip-aot trivia-cms.core
+  :uberjar-name "trivia-cms-standalone.jar"
+  :uberjar {:aot :all}
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.9.229"]
                  [compojure "1.5.1"] ; routes
                  [hiccup "1.0.5"] ; html 
                  [ring/ring-defaults "0.2.1"] ; server
                  [ring/ring-json "0.4.0"] ; json parser
+                 [ring/ring-jetty-adapter "1.4.0"]
                  [com.novemberain/monger "3.1.0"] ; mongodb client
                  [org.clojure/tools.logging "0.3.1"] ; logging
                  [log4j/log4j "1.2.17" :exclusions [javax.mail/mail
@@ -42,5 +45,5 @@
                          [org.clojure/data.json "0.2.6"]]
           :env {:database-name "ltcla_quizzes_test"}}
 
-   :prod {:jvm-opts ["-Dlogfile.path=production"]
-          :env {:database-name "ltcla_quizzes_prod"}}})
+   :production {:jvm-opts ["-Dlogfile.path=production"]
+                :env {:database-name "heroku_np83q2zj"}}})
