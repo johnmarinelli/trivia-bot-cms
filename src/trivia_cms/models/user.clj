@@ -12,12 +12,40 @@
 (defn find-user [username]
   (first (mc/find-maps db-handle collection-name {:username username})))
 
+(defn find-user-by-id [id]
+  (first (mc/find-maps db-handle collection-name {:_id (ObjectId. id)})))
+
 (defn check-user-password [username password]
   (let [user (find-user username)]
     (if (not (nil? user))
       (when (hashers/check password (:password-hash user))
         user)
       false)))
+
+(defn set-token [id token]
+  (mc/find-and-modify db-handle 
+                      collection-name 
+                      {:_id (ObjectId. id)} 
+                      {:$set {:token token} }
+                      {:return-new true}))
+
+(defn get-token [id]
+  (let [user (first (mc/find-maps db-handle collection-name {:_id (ObjectId. id)}))]
+    (:token user)))
+
+(defn remove-token [username]
+  (mc/find-and-modify db-handle
+                      collection-name
+                      {:username username}
+                      {:$set {:token ""}}
+                      {:return-new true}))
+
+(defn set-modified-at [id]
+  (mc/find-and-modify db-handle
+                      collection-name
+                      {:_id (ObjectId. id)}
+                      {:$set {:modified_at (System/currentTimeMillis)}}
+                      {:return-new true}))
 
 (defn create-user! [user]
   (let [password (:password user)]

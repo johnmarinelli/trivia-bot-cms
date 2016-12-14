@@ -10,6 +10,10 @@
             [ring.middleware.session :refer [wrap-session]]
             
             [buddy.auth.accessrules :refer [restrict]]
+            [buddy.auth.backends.session :refer [session-backend]]
+            [buddy.auth.middleware :refer [wrap-authentication wrap-authorization]]
+
+            [trivia-cms.api.user-login :refer [wrap-user backend]]
 
             [trivia-cms.models.quiz :as quiz]
             [trivia-cms.models.question :as question]
@@ -25,6 +29,7 @@
   (context "/api" []
            (restrict api-routes {:handler user-login/is-authenticated
                                  :on-error (fn [req val] 
+                                             (println "API error - request: " req)
                                              (let [msg (doall 
                                                         (if (empty? val)  
                                                           "Unauthorized" 
@@ -38,6 +43,7 @@
   (GET "/api/quizzes" 
        [request] 
        (let [res (quiz/find-models {})]
+         (println request)
          (map #(public-api/serialize %) res)))
 
   (GET ["/api/quizzes/:name" :name #".{1,16}"]
@@ -136,7 +142,10 @@
   (->
    api-routes
    (wrap-defaults api-defaults)
+   (wrap-session {:cookie-attrs {:max-age 15}})
+   (wrap-user)
+   (wrap-authentication backend)
+   (wrap-authorization backend)
    (wrap-json-params)
    (wrap-json-response)
-   (wrap-session)
    (trailing-slash-middleware)))
