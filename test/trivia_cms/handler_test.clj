@@ -103,12 +103,11 @@
 
 (defn trivia-fixture [f]
   (init-db)
-  (println test-user)
   (create-user! test-user)
   (app 
    (->
     (mock/request :post "/login" (json/write-str {:username (:username test-user) :password (:password "test-user")}))
-    (mock/content-type "application-json")))
+    (mock/content-type "application/json")))
   (f)
   (teardown-db))
 
