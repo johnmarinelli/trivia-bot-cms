@@ -4,6 +4,7 @@
             [ring.util.response :refer [response redirect]]
             [ring.middleware.json :refer [wrap-json-params]]
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
+            [buddy.hashers :as hashers]
             [compojure.core :refer :all]
             [ring.middleware.session :refer [wrap-session]]
             [ring.middleware.params :refer [wrap-params]]))
@@ -11,7 +12,7 @@
 (defn login [username password session]
   (if-let [u (user/check-user-password username password)]
     (let [uid (.toString (:_id u))]
-      (user/set-token {:_id uid} "1")
+      (user/set-token {:_id uid} (.toString (java.util.UUID/randomUUID)))
       (user/set-modified-at {:_id uid})
       (-> (response "1")
           (update :headers #(merge {"Set-Cookie" (str "token=" (user/get-token uid))
@@ -24,6 +25,7 @@
   (user/remove-token username)
   (user/set-modified-at {:username username})
   (response "1"))
+
 (defn is-authenticated [{cookies :cookies :as req}]
   (let [token (:value (get cookies "token"))
         username (:value (get cookies "username"))
