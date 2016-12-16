@@ -142,7 +142,7 @@
   (->
    api-routes
    (wrap-defaults api-defaults)
-   (wrap-session {:cookie-attrs {:max-age 15}})
+   (wrap-session)
    (wrap-user)
    (wrap-authentication backend)
    (wrap-authorization backend)

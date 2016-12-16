@@ -11,25 +11,27 @@
             [ring.middleware.params :refer [wrap-params]]))
 
 (defn login [username password session]
-  (println session)
   (if-let [u (user/check-user-password username password)]
     (let [uid (.toString (:_id u))]
-      (user/set-token uid "1")
-      (user/set-modified-at uid)
+      (user/set-token {:_id uid} "1")
+      (user/set-modified-at {:_id uid})
       (-> (response "1")
           (update :headers #(merge {"Set-Cookie" (str "token=" (user/get-token uid))
                                     "Username" username} %))))
     (response "0")))
 
-(defn logout [{session :session}]
-  (assoc (response "1") :session (dissoc session :identity)))
+(declare is-authenticated)
+
+(defn logout [username]
+  (user/remove-token username)
+  (user/set-modified-at {:username username})
+  (response "1"))
 
 (defn is-authenticated [{cookies :cookies :as req}]
   (let [token (:value (get cookies "token"))
         username (:value (get cookies "username"))
         user (user/find-user username)
         user-token (:token user)] 
-    (println token)
     (and (not (some nil? [token username user user-token])) (= token user-token))))
 
 (defn wrap-user [handler]
@@ -44,13 +46,9 @@
           (println "Request: " request)
           (login (:username form-params) (:password form-params) session)))
 
-  (GET "/abc" [req] (println req))
-
   (POST "/logout" request []
-        (if (is-authenticated (:cookies request))
-          (let [username (:value (get (:cookies request) "username"))]
-            (user/remove-token username)
-            (response "1"))
+        (if (is-authenticated request)
+          (logout request)
           (response "0"))))
 
 (def backend (session-backend))

@@ -6,7 +6,7 @@
 (defroutes all-routes
   (ANY "/api*" [] api)
   (POST "/login" [] user-login)
-  (POST "/logout" user-login))
+  (POST "/logout" [] user-login))
 
 (def app
   (routes all-routes))

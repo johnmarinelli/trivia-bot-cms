@@ -9,7 +9,7 @@
             [trivia-cms.models.question :refer [->Question] :as question]
             [trivia-cms.api.public-api :as public-api]
             [trivia-cms.api.user-login :as login]
-            [trivia-cms.models.user :refer [create-user!]]
+            [trivia-cms.models.user :refer [create-user! set-token]]
             [monger.core :as mg]
             [monger.collection :as mc])
   (:use [clojure.walk])
@@ -23,7 +23,8 @@
   {:username "test" :password "test"})
 
 (defn bypass-auth [handler]
-  (assoc handler :user test-user))
+  (println handler)
+  (assoc handler :cookies {"username" {:value "test"} "token" {:value "1"}}))
 
 (def test-question-1
   (->Question
@@ -104,10 +105,7 @@
 (defn trivia-fixture [f]
   (init-db)
   (create-user! test-user)
-  (app 
-   (->
-    (mock/request :post "/login" (json/write-str {:username (:username test-user) :password (:password "test-user")}))
-    (mock/content-type "application/json")))
+  (set-token {:username "test"} "1")
   (f)
   (teardown-db))
 

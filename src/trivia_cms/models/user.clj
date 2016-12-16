@@ -7,6 +7,7 @@
   (:use monger.operators)
   (:import [org.bson.types ObjectId]))
 
+; TODO: refactor models to use {:_id :name} destructure pattern
 (def collection-name "users")
 
 (defn find-user [username]
@@ -22,12 +23,14 @@
         user)
       false)))
 
-(defn set-token [id token]
-  (mc/find-and-modify db-handle 
-                      collection-name 
-                      {:_id (ObjectId. id)} 
-                      {:$set {:token token} }
-                      {:return-new true}))
+(defn set-token [{id :_id username :username} token]
+  (println id)
+  (let [cond (if (nil? id) {:username username} {:_id (ObjectId. id)})]
+    (mc/find-and-modify db-handle 
+                        collection-name 
+                        cond
+                        {:$set {:token token} }
+                        {:return-new true})))
 
 (defn get-token [id]
   (let [user (first (mc/find-maps db-handle collection-name {:_id (ObjectId. id)}))]
@@ -40,12 +43,13 @@
                       {:$set {:token ""}}
                       {:return-new true}))
 
-(defn set-modified-at [id]
-  (mc/find-and-modify db-handle
+(defn set-modified-at [{id :_id username :username}]
+  (let [cond (if (nil? id) {:username username} {:_id (ObjectId. id)})]
+      (mc/find-and-modify db-handle
                       collection-name
-                      {:_id (ObjectId. id)}
+                      cond
                       {:$set {:modified_at (System/currentTimeMillis)}}
-                      {:return-new true}))
+                      {:return-new true})))
 
 (defn create-user! [user]
   (let [password (:password user)]
