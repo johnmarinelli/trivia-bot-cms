@@ -10,10 +10,10 @@
             [ring.middleware.session :refer [wrap-session]]
             
             [buddy.auth.accessrules :refer [restrict]]
-            [buddy.auth.backends.session :refer [session-backend]]
-            [buddy.auth.middleware :refer [wrap-authentication wrap-authorization]]
 
-            [trivia-cms.api.user-login :refer [wrap-user backend]]
+
+
+            [trivia-cms.api.user-login :refer [wrap-user]]
 
             [trivia-cms.models.quiz :as quiz]
             [trivia-cms.models.question :as question]
@@ -144,8 +144,8 @@
    (wrap-defaults api-defaults)
    (wrap-session)
    (wrap-user)
-   (wrap-authentication backend)
-   (wrap-authorization backend)
+
+
    (wrap-json-params)
    (wrap-json-response)
    (trailing-slash-middleware)))

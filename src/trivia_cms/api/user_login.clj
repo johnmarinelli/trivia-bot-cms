@@ -5,8 +5,6 @@
             [ring.middleware.json :refer [wrap-json-params]]
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
             [compojure.core :refer :all]
-            [buddy.auth.backends.session :refer [session-backend]]
-            [buddy.auth.middleware :refer [wrap-authentication wrap-authorization]]
             [ring.middleware.session :refer [wrap-session]]
             [ring.middleware.params :refer [wrap-params]]))
 
@@ -26,7 +24,6 @@
   (user/remove-token username)
   (user/set-modified-at {:username username})
   (response "1"))
-
 (defn is-authenticated [{cookies :cookies :as req}]
   (let [token (:value (get cookies "token"))
         username (:value (get cookies "username"))
@@ -51,14 +48,12 @@
           (logout request)
           (response "0"))))
 
-(def backend (session-backend))
-
 (def user-login
   (->
    user-login-routes
    (wrap-session)
    (wrap-defaults api-defaults)
-   (wrap-authentication backend)
-   (wrap-authorization backend)
+
+
    (wrap-user)
    (wrap-json-params)))
