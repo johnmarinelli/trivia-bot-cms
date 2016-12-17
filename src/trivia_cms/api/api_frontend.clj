@@ -43,7 +43,6 @@
   (GET "/api/quizzes" 
        [request] 
        (let [res (quiz/find-models {})]
-         (println request)
          (map #(public-api/serialize %) res)))
 
   (GET ["/api/quizzes/:name" :name #".{1,16}"]

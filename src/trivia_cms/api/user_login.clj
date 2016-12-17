@@ -41,8 +41,6 @@
   (POST "/login" request
         (let [form-params (:params request)
               session (:session request)]
-          (println "Params:" form-params)
-          (println "Request: " request)
           (login (:username form-params) (:password form-params) session)))
 
   (POST "/logout" request []

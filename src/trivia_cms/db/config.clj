@@ -21,6 +21,8 @@
      "/" 
      (map env [:mongodb-uri-host :database-name])))))
 
+(println (env :mongodb-uri-host))
+
 (def database (env :database-name))
 (def db-handle (if (nil? (System/getenv "MONGODB_URI")) 
                  (mg/get-db conn database)

@@ -34,7 +34,8 @@
                         [org.clojure/tools.nrepl "0.2.12"]
                         [org.clojure/data.json "0.2.6"]]
          :jvm-opts ["-Dlogfile.path=dev"]
-         :env {:database-name "ltcla_quizzes"}
+         :env {:database-name "ltcla_quizzes"
+               :mongodb-uri-host "127.0.0.1"}
          :repl {:dependencies [[trivia-cms.handler]
                                [trivia-cms.db]]}}
 
@@ -43,7 +44,8 @@
                          [javax.servlet/servlet-api "2.5"]
                          [ring/ring-mock "0.3.0"]
                          [org.clojure/data.json "0.2.6"]]
-          :env {:database-name "ltcla_quizzes_test"}}
+          :env {:database-name "ltcla_quizzes_test"
+                :mongodb-uri-host "127.0.0.1"}}
 
    :production {:jvm-opts ["-Dlogfile.path=production"]
                 :env {:database-name "heroku_np83q2zj"}}})

@@ -7,14 +7,19 @@
             [monger.collection :as mc]
             [buddy.hashers :as hashers]))
 
+(def test-user-token (atom ""))
+
+(def mock-user
+  (atom {:username "test" :password-hash (hashers/encrypt "password")}))
+
 ; Seed database
 (defn init-db []
   (println "Seeding test database...")
-  (mc/insert-and-return db-handle user/collection-name {:username "test" :password-hash (hashers/encrypt "password")}))
+  (mc/insert-and-return db-handle user/collection-name @mock-user))
 
 (defn teardown-db []
   (println "Removing all records from test database...")
-  (mc/remove db-handle user/collection-name))
+  (comment(mc/remove db-handle user/collection-name)))
 
 (defn user-login-fixture [f]
   (init-db)
@@ -27,10 +32,17 @@
   (testing "login"
     (let [res (login "test" "password" {})
           headers (:headers res)]
-      (is (not (nil? (get headers "Set-Cookie"))))))
+      (is (not (nil? (get headers "Set-Cookie"))))
+      (swap! 
+       mock-user 
+       update-in 
+       [:token] 
+       (fn [_] 
+         (second
+          (clojure.string/split (get headers "Set-Cookie") #"="))))))
 
   (testing "is authenticated"
-    (let [mock-request {:cookies {"token" {:value "1"} "username" {:value "test"}}}
+    (let [mock-request {:cookies {"token" {:value (:token @mock-user)} "username" {:value "test"}}}
           res (is-authenticated mock-request)]
       (is (= true res))))
   
