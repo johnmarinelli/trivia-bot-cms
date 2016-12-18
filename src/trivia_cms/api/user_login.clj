@@ -11,31 +11,33 @@
 
 (defn login [username password session]
   (if-let [u (user/check-user-password username password)]
-    (let [uid (.toString (:_id u))]
-      (user/set-token {:_id uid} (.toString (java.util.UUID/randomUUID)))
-      (user/set-modified-at {:_id uid})
+    (let [user-id (.toString (:_id u))
+          uuid (.toString (java.util.UUID/randomUUID))]
+      (user/set-token {:_id user-id} uuid)
+      (user/set-modified-at {:_id user-id})
       (-> (response "1")
-          (update :headers #(merge {"Set-Cookie" (str "token=" (user/get-token uid))
+          (update :headers #(merge {"Set-Cookie" (str "token=" uuid)
                                     "Username" username} %))))
     (response "0")))
 
 (declare is-authenticated)
 
 (defn logout [username]
-  (user/remove-token username)
-  (user/set-modified-at {:username username})
-  (response "1"))
+  (let [token-removed (not (nil? (user/remove-token username)))]
+    (user/set-modified-at {:username username})
+    (if token-removed
+      (response "1")
+      (response "Logout failed."))))
 
 (defn is-authenticated [{cookies :cookies :as req}]
   (let [token (:value (get cookies "token"))
         username (:value (get cookies "username"))
         user (user/find-user username)
         user-token (:token user)] 
-    (and (not (some nil? [token username user user-token])) (= token user-token))))
-
-(defn wrap-user [handler]
-  (fn [{user-id :identity :as req}]
-    (handler (assoc req :user (user/find-user user-id)))))
+    (and 
+     (not 
+      (some nil? [token username user user-token])) 
+     (= token user-token))))
 
 (defroutes user-login-routes 
   (POST "/login" request
@@ -43,9 +45,9 @@
               session (:session request)]
           (login (:username form-params) (:password form-params) session)))
 
-  (POST "/logout" request []
+  (POST "/logout" request
         (if (is-authenticated request)
-          (logout request)
+          (logout (-> request :cookies (get "username") :value))
           (response "0"))))
 
 (def user-login
@@ -53,7 +55,4 @@
    user-login-routes
    (wrap-session)
    (wrap-defaults api-defaults)
-
-
-   (wrap-user)
    (wrap-json-params)))

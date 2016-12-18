@@ -24,7 +24,6 @@
       false)))
 
 (defn set-token [{id :_id username :username} token]
-  (println id)
   (let [cond (if (nil? id) {:username username} {:_id (ObjectId. id)})]
     (mc/find-and-modify db-handle 
                         collection-name 
@@ -57,5 +56,3 @@
         (assoc  :password-hash (hashers/encrypt password))
         (dissoc :password)
         (->> (mc/insert-and-return db-handle collection-name)))))
-
-

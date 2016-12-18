@@ -11,10 +11,6 @@
             
             [buddy.auth.accessrules :refer [restrict]]
 
-
-
-            [trivia-cms.api.user-login :refer [wrap-user]]
-
             [trivia-cms.models.quiz :as quiz]
             [trivia-cms.models.question :as question]
             [trivia-cms.api.user-login :as user-login]
@@ -142,9 +138,6 @@
    api-routes
    (wrap-defaults api-defaults)
    (wrap-session)
-   (wrap-user)
-
-
    (wrap-json-params)
    (wrap-json-response)
    (trailing-slash-middleware)))
